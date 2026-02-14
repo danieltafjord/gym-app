@@ -10,8 +10,16 @@ export type User = {
     [key: string]: unknown;
 };
 
+export type ManagedTeam = {
+    id: number;
+    name: string;
+    slug: string;
+};
+
 export type Auth = {
     user: User;
+    roles: string[];
+    managedTeams: ManagedTeam[];
 };
 
 export type TwoFactorSetupData = {

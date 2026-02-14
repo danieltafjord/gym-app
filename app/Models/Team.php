@@ -1,0 +1,88 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
+class Team extends Model
+{
+    use HasFactory;
+
+    /** @var list<string> */
+    public const RESERVED_SLUGS = [
+        'admin',
+        'account',
+        'team',
+        'login',
+        'register',
+        'logout',
+        'api',
+        'settings',
+        'password',
+        'email',
+        'verify-email',
+        'two-factor-challenge',
+        'confirm-password',
+        'forgot-password',
+        'reset-password',
+        'up',
+    ];
+
+    protected $fillable = [
+        'owner_id',
+        'name',
+        'slug',
+        'description',
+        'logo_path',
+        'is_active',
+        'stripe_account_id',
+        'stripe_onboarding_complete',
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'is_active' => 'boolean',
+            'stripe_onboarding_complete' => 'boolean',
+        ];
+    }
+
+    public function hasStripeAccount(): bool
+    {
+        return $this->stripe_account_id !== null && $this->stripe_onboarding_complete;
+    }
+
+    public function getRouteKeyName(): string
+    {
+        return 'slug';
+    }
+
+    public function owner(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'owner_id');
+    }
+
+    public function gyms(): HasMany
+    {
+        return $this->hasMany(Gym::class);
+    }
+
+    public function membershipPlans(): HasMany
+    {
+        return $this->hasMany(MembershipPlan::class);
+    }
+
+    public function memberships(): HasMany
+    {
+        return $this->hasMany(Membership::class);
+    }
+
+    public function scopeActive(Builder $query): Builder
+    {
+        return $query->where('is_active', true);
+    }
+}

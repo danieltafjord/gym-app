@@ -56,4 +56,18 @@ class UserFactory extends Factory
             'two_factor_confirmed_at' => now(),
         ]);
     }
+
+    public function teamOwner(): static
+    {
+        return $this->afterCreating(function (\App\Models\User $user) {
+            $user->assignRole('team-owner');
+        });
+    }
+
+    public function superAdmin(): static
+    {
+        return $this->afterCreating(function (\App\Models\User $user) {
+            $user->assignRole('super-admin');
+        });
+    }
 }
