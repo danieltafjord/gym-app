@@ -18,6 +18,10 @@ export default function TeamSettingsLayout({
             title: 'Widget Defaults',
             href: team.settings.widgetDefaults.url(teamSlug),
         },
+        {
+            title: 'Check-In',
+            href: team.settings.checkIn.url(teamSlug),
+        },
     ];
 
     if (typeof window === 'undefined') {

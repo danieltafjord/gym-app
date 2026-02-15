@@ -4,7 +4,9 @@ import {
     ClipboardList,
     CreditCard,
     Dumbbell,
+    History,
     LayoutGrid,
+    ScanLine,
     Settings,
     Shield,
     User,
@@ -30,6 +32,8 @@ import { show as teamShow } from '@/routes/team';
 import { index as teamGymsIndex } from '@/routes/team/gyms';
 import { index as teamPlansIndex } from '@/routes/team/plans';
 import { index as teamMembersIndex } from '@/routes/team/members';
+import { scanner as teamCheckInScanner } from '@/routes/team/check-in';
+import { index as teamCheckInsIndex } from '@/routes/team/check-ins';
 import { widgetDefaults as teamSettingsWidgetDefaults } from '@/routes/team/settings';
 import { dashboard as adminDashboard } from '@/routes/admin';
 import { index as adminTeamsIndex } from '@/routes/admin/teams';
@@ -76,6 +80,16 @@ export function AppSidebar() {
                   title: 'Plans',
                   href: teamPlansIndex(currentTeam.slug),
                   icon: ClipboardList,
+              },
+              {
+                  title: 'Check-In',
+                  href: teamCheckInScanner(currentTeam.slug).url,
+                  icon: ScanLine,
+              },
+              {
+                  title: 'Check-In Log',
+                  href: teamCheckInsIndex(currentTeam.slug).url,
+                  icon: History,
               },
               {
                   title: 'Members',

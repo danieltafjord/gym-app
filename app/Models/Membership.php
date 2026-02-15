@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Str;
 
 class Membership extends Model
 {
@@ -52,6 +54,29 @@ class Membership extends Model
     public function plan(): BelongsTo
     {
         return $this->belongsTo(MembershipPlan::class, 'membership_plan_id');
+    }
+
+    public function checkIns(): HasMany
+    {
+        return $this->hasMany(CheckIn::class);
+    }
+
+    public function regenerateAccessCode(): void
+    {
+        do {
+            $code = strtoupper(Str::random(24));
+        } while (self::where('access_code', $code)->exists());
+
+        $this->update(['access_code' => $code]);
+    }
+
+    public static function generateAccessCode(): string
+    {
+        do {
+            $code = strtoupper(Str::random(24));
+        } while (self::where('access_code', $code)->exists());
+
+        return $code;
     }
 
     public function scopeActive(Builder $query): Builder

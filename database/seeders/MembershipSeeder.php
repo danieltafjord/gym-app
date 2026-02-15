@@ -14,6 +14,33 @@ class MembershipSeeder extends Seeder
     public function run(): void
     {
         $plans = MembershipPlan::all();
+
+        // Known test member for easy login
+        $testMember = User::firstOrCreate(
+            ['email' => 'member@gymapp.com'],
+            [
+                'name' => 'Test Member',
+                'password' => 'password',
+                'email_verified_at' => now(),
+            ],
+        );
+
+        $testPlan = $plans->first();
+        setPermissionsTeamId($testPlan->team_id);
+        $testMember->assignRole('member');
+
+        Membership::create([
+            'user_id' => $testMember->id,
+            'team_id' => $testPlan->team_id,
+            'membership_plan_id' => $testPlan->id,
+            'email' => $testMember->email,
+            'customer_name' => $testMember->name,
+            'access_code' => strtoupper(Str::random(24)),
+            'status' => MembershipStatus::Active,
+            'starts_at' => now()->subDays(30),
+            'ends_at' => now()->addDays(335),
+        ]);
+
         $members = User::factory(20)->create([
             'email_verified_at' => now(),
         ]);
@@ -30,7 +57,7 @@ class MembershipSeeder extends Seeder
                 'membership_plan_id' => $plan->id,
                 'email' => $user->email,
                 'customer_name' => $user->name,
-                'access_code' => strtoupper(Str::random(8)),
+                'access_code' => strtoupper(Str::random(24)),
                 'status' => MembershipStatus::Active,
                 'starts_at' => now()->subDays(rand(1, 90)),
                 'ends_at' => now()->addDays(rand(30, 365)),

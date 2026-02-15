@@ -23,7 +23,7 @@ class MembershipFactory extends Factory
             'email' => fake()->safeEmail(),
             'customer_name' => fake()->name(),
             'customer_phone' => fake()->phoneNumber(),
-            'access_code' => Str::random(8),
+            'access_code' => strtoupper(Str::random(24)),
             'status' => MembershipStatus::Active,
             'starts_at' => now(),
             'ends_at' => now()->addMonth(),

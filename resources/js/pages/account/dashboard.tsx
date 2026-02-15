@@ -1,4 +1,5 @@
 import { Head } from '@inertiajs/react';
+import { QRCodeSVG } from 'qrcode.react';
 import Heading from '@/components/heading';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -49,6 +50,19 @@ export default function AccountDashboard({ memberships }: Props) {
                                     <Badge variant="secondary">
                                         {membership.status}
                                     </Badge>
+                                </CardContent>
+                                <CardContent className="flex flex-col items-center border-t pt-4">
+                                    <QRCodeSVG
+                                        value={membership.access_code}
+                                        size={160}
+                                        level="M"
+                                    />
+                                    <p className="mt-2 font-mono text-sm tracking-widest text-muted-foreground">
+                                        {membership.access_code}
+                                    </p>
+                                    <p className="mt-1 text-xs text-muted-foreground">
+                                        Show this QR code at the gym to check in
+                                    </p>
                                 </CardContent>
                             </Card>
                         ))}

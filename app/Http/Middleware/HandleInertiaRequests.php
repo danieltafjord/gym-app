@@ -48,6 +48,9 @@ class HandleInertiaRequests extends Middleware
                 ? ['id' => $routeTeam->id, 'name' => $routeTeam->name, 'slug' => $routeTeam->slug]
                 : null,
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
+            'flash' => [
+                'checkInResult' => fn () => $request->session()->get('checkInResult'),
+            ],
         ];
     }
 }

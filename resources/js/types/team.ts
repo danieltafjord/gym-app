@@ -105,6 +105,49 @@ export type Membership = {
     updated_at: string;
 };
 
+export type CheckInMethod = 'qr_scan' | 'barcode_scanner' | 'manual_entry';
+
+export type CheckIn = {
+    id: number;
+    membership_id: number;
+    team_id: number;
+    gym_id: number | null;
+    checked_in_by: number | null;
+    method: CheckInMethod;
+    membership?: Membership;
+    gym?: Gym;
+    checked_in_by_user?: {
+        id: number;
+        name: string;
+    };
+    created_at: string;
+    updated_at: string;
+};
+
+export type CheckInSettings = {
+    enabled: boolean;
+    allowed_methods: CheckInMethod[];
+    require_gym_selection: boolean;
+    prevent_duplicate_minutes: number;
+    kiosk_mode: 'camera' | 'barcode_scanner';
+};
+
+export type CheckInResult = {
+    success: boolean;
+    message: string;
+    membership: {
+        id: number;
+        customer_name: string;
+        plan_name: string | null;
+        status: string;
+    } | null;
+    check_in: {
+        id: number;
+        created_at: string;
+        gym_name: string | null;
+    } | null;
+};
+
 export type PaginatedData<T> = {
     data: T[];
     current_page: number;

@@ -352,8 +352,8 @@ it('generates unique access code on membership creation', function () {
     $membership1 = $action->handle(null, $plan, 'a@example.com', 'User A');
     $membership2 = $action->handle(null, $plan, 'b@example.com', 'User B');
 
-    expect($membership1->access_code)->toHaveLength(8);
-    expect($membership2->access_code)->toHaveLength(8);
+    expect($membership1->access_code)->toHaveLength(24);
+    expect($membership2->access_code)->toHaveLength(24);
     expect($membership1->access_code)->not->toBe($membership2->access_code);
     expect($membership1->user_id)->toBeNull();
     expect($membership1->email)->toBe('a@example.com');

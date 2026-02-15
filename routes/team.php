@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Team\CheckInController;
+use App\Http\Controllers\Team\CheckInSettingsController;
 use App\Http\Controllers\Team\GymController;
 use App\Http\Controllers\Team\MemberController;
 use App\Http\Controllers\Team\MembershipPlanController;
@@ -46,6 +48,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Plans
         Route::resource('plans', MembershipPlanController::class)->names('team.plans');
 
+        // Check-In
+        Route::get('check-in', [CheckInController::class, 'scanner'])->name('team.check-in.scanner');
+        Route::post('check-in', [CheckInController::class, 'store'])->name('team.check-in.store');
+        Route::get('check-ins', [CheckInController::class, 'index'])->name('team.check-ins.index');
+
         // Members
         Route::get('members', [MemberController::class, 'index'])->name('team.members.index');
         Route::get('members/{membership}', [MemberController::class, 'show'])->name('team.members.show');
@@ -56,6 +63,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('settings', fn () => redirect()->route('team.settings.widget-defaults', ['team' => request()->route('team')]))->name('team.settings');
         Route::get('settings/widget-defaults', [TeamWidgetDefaultsController::class, 'edit'])->name('team.settings.widget-defaults');
         Route::patch('settings/widget-defaults', [TeamWidgetDefaultsController::class, 'update'])->name('team.settings.widget-defaults.update');
+        Route::get('settings/check-in', [CheckInSettingsController::class, 'edit'])->name('team.settings.check-in');
+        Route::patch('settings/check-in', [CheckInSettingsController::class, 'update'])->name('team.settings.check-in.update');
 
         // Stripe Connect
         Route::get('stripe/onboard', [StripeConnectController::class, 'onboard'])->name('team.stripe.onboard');

@@ -33,6 +33,15 @@ class Team extends Model
         'up',
     ];
 
+    /** @var array<string, mixed> */
+    public const DEFAULT_CHECK_IN_SETTINGS = [
+        'enabled' => true,
+        'allowed_methods' => ['qr_scan', 'barcode_scanner', 'manual_entry'],
+        'require_gym_selection' => true,
+        'prevent_duplicate_minutes' => 5,
+        'kiosk_mode' => 'camera',
+    ];
+
     protected $fillable = [
         'owner_id',
         'name',
@@ -43,6 +52,7 @@ class Team extends Model
         'stripe_account_id',
         'stripe_onboarding_complete',
         'widget_settings',
+        'check_in_settings',
     ];
 
     protected function casts(): array
@@ -51,6 +61,7 @@ class Team extends Model
             'is_active' => 'boolean',
             'stripe_onboarding_complete' => 'boolean',
             'widget_settings' => 'array',
+            'check_in_settings' => 'array',
         ];
     }
 
@@ -61,6 +72,16 @@ class Team extends Model
     {
         return Attribute::get(
             fn () => array_merge(Gym::DEFAULT_WIDGET_SETTINGS, $this->widget_settings ?? [])
+        );
+    }
+
+    /**
+     * @return Attribute<array<string, mixed>, never>
+     */
+    protected function checkInSettingsWithDefaults(): Attribute
+    {
+        return Attribute::get(
+            fn () => array_merge(self::DEFAULT_CHECK_IN_SETTINGS, $this->check_in_settings ?? [])
         );
     }
 
@@ -92,6 +113,11 @@ class Team extends Model
     public function memberships(): HasMany
     {
         return $this->hasMany(Membership::class);
+    }
+
+    public function checkIns(): HasMany
+    {
+        return $this->hasMany(CheckIn::class);
     }
 
     public function scopeActive(Builder $query): Builder

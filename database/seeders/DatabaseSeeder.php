@@ -15,6 +15,7 @@ class DatabaseSeeder extends Seeder
             GymSeeder::class,
             MembershipPlanSeeder::class,
             MembershipSeeder::class,
+            CheckInSeeder::class,
             EmailTemplateSeeder::class,
         ]);
     }
