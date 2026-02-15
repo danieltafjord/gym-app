@@ -5,6 +5,8 @@ use App\Http\Controllers\Team\MemberController;
 use App\Http\Controllers\Team\MembershipPlanController;
 use App\Http\Controllers\Team\StripeConnectController;
 use App\Http\Controllers\Team\TeamController;
+use App\Http\Controllers\Team\TeamWidgetDefaultsController;
+use App\Http\Controllers\Team\WidgetSettingsController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'verified'])->group(function () {
@@ -17,7 +19,29 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::patch('/', [TeamController::class, 'update'])->name('team.update');
 
         // Gyms
-        Route::resource('gyms', GymController::class)->names('team.gyms');
+        Route::resource('gyms', GymController::class)->except('edit')->names('team.gyms');
+
+        // Gym Settings
+        Route::prefix('gyms/{gym}/settings')->group(function () {
+            Route::get('/', fn () => redirect()->route('team.gyms.settings.general', [
+                'team' => request()->route('team'),
+                'gym' => request()->route('gym'),
+            ]))->name('team.gyms.settings');
+            Route::get('general', [GymController::class, 'edit'])->name('team.gyms.settings.general');
+            Route::get('widget', [WidgetSettingsController::class, 'edit'])->name('team.gyms.settings.widget');
+            Route::patch('widget', [WidgetSettingsController::class, 'update'])->name('team.gyms.settings.widget.update');
+            Route::delete('widget', [WidgetSettingsController::class, 'destroy'])->name('team.gyms.settings.widget.destroy');
+        });
+
+        // Legacy redirects
+        Route::get('gyms/{gym}/edit', fn () => redirect()->route('team.gyms.settings.general', [
+            'team' => request()->route('team'),
+            'gym' => request()->route('gym'),
+        ]))->name('team.gyms.edit');
+        Route::get('gyms/{gym}/widget', fn () => redirect()->route('team.gyms.settings.widget', [
+            'team' => request()->route('team'),
+            'gym' => request()->route('gym'),
+        ]))->name('team.gyms.widget');
 
         // Plans
         Route::resource('plans', MembershipPlanController::class)->names('team.plans');
@@ -27,6 +51,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('members/{membership}', [MemberController::class, 'show'])->name('team.members.show');
         Route::patch('members/{membership}', [MemberController::class, 'update'])->name('team.members.update');
         Route::delete('members/{membership}', [MemberController::class, 'destroy'])->name('team.members.destroy');
+
+        // Settings
+        Route::get('settings', fn () => redirect()->route('team.settings.widget-defaults', ['team' => request()->route('team')]))->name('team.settings');
+        Route::get('settings/widget-defaults', [TeamWidgetDefaultsController::class, 'edit'])->name('team.settings.widget-defaults');
+        Route::patch('settings/widget-defaults', [TeamWidgetDefaultsController::class, 'update'])->name('team.settings.widget-defaults.update');
 
         // Stripe Connect
         Route::get('stripe/onboard', [StripeConnectController::class, 'onboard'])->name('team.stripe.onboard');

@@ -75,12 +75,12 @@ export default function GymIndex({
                                         <td className="px-4 py-3 text-right">
                                             <Button variant="ghost" size="sm" asChild>
                                                 <Link
-                                                    href={team.gyms.edit({
+                                                    href={team.gyms.settings.general.url({
                                                         team: currentTeam.slug,
                                                         gym: gym.slug,
-                                                    }).url}
+                                                    })}
                                                 >
-                                                    Edit
+                                                    Settings
                                                 </Link>
                                             </Button>
                                         </td>

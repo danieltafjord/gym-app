@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -41,6 +42,7 @@ class Team extends Model
         'is_active',
         'stripe_account_id',
         'stripe_onboarding_complete',
+        'widget_settings',
     ];
 
     protected function casts(): array
@@ -48,7 +50,18 @@ class Team extends Model
         return [
             'is_active' => 'boolean',
             'stripe_onboarding_complete' => 'boolean',
+            'widget_settings' => 'array',
         ];
+    }
+
+    /**
+     * @return Attribute<array<string, mixed>, never>
+     */
+    protected function widgetSettingsWithDefaults(): Attribute
+    {
+        return Attribute::get(
+            fn () => array_merge(Gym::DEFAULT_WIDGET_SETTINGS, $this->widget_settings ?? [])
+        );
     }
 
     public function hasStripeAccount(): bool

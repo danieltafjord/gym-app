@@ -5,6 +5,7 @@ import {
     CreditCard,
     Dumbbell,
     LayoutGrid,
+    Settings,
     Shield,
     User,
     Users,
@@ -29,6 +30,7 @@ import { show as teamShow } from '@/routes/team';
 import { index as teamGymsIndex } from '@/routes/team/gyms';
 import { index as teamPlansIndex } from '@/routes/team/plans';
 import { index as teamMembersIndex } from '@/routes/team/members';
+import { widgetDefaults as teamSettingsWidgetDefaults } from '@/routes/team/settings';
 import { dashboard as adminDashboard } from '@/routes/admin';
 import { index as adminTeamsIndex } from '@/routes/admin/teams';
 import { index as adminUsersIndex } from '@/routes/admin/users';
@@ -79,6 +81,11 @@ export function AppSidebar() {
                   title: 'Members',
                   href: teamMembersIndex(currentTeam.slug),
                   icon: Users,
+              },
+              {
+                  title: 'Settings',
+                  href: teamSettingsWidgetDefaults(currentTeam.slug).url,
+                  icon: Settings,
               },
           ]
         : [];

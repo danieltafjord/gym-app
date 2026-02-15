@@ -40,7 +40,7 @@ class GymController extends Controller
 
     public function edit(Team $team, Gym $gym): Response
     {
-        return Inertia::render('team/gyms/edit', [
+        return Inertia::render('team/gyms/settings/general', [
             'team' => $team,
             'gym' => $gym,
         ]);

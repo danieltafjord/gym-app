@@ -15,6 +15,10 @@ class MembershipPlan extends Model
 {
     use HasFactory;
 
+    protected $appends = [
+        'price_formatted',
+    ];
+
     protected $fillable = [
         'team_id',
         'name',
