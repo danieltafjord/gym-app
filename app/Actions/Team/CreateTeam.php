@@ -9,7 +9,7 @@ use Illuminate\Support\Str;
 class CreateTeam
 {
     /**
-     * @param  array{name: string, description?: string|null, logo_path?: string|null}  $data
+     * @param  array{name: string, description?: string|null, default_currency?: string|null, default_language?: string|null, logo_path?: string|null}  $data
      */
     public function handle(User $owner, array $data): Team
     {
@@ -25,6 +25,8 @@ class CreateTeam
             'name' => $data['name'],
             'slug' => $slug,
             'description' => $data['description'] ?? null,
+            'default_currency' => $data['default_currency'] ?? 'USD',
+            'default_language' => $data['default_language'] ?? 'en',
             'logo_path' => $data['logo_path'] ?? null,
         ]);
 

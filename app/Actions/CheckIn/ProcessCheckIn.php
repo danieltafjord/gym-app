@@ -60,10 +60,25 @@ class ProcessCheckIn
             }
         }
 
+        $gymId = $data['gym_id'] ?? null;
+
+        if ($gymId === null) {
+            $activeGyms = $team->gyms()
+                ->active()
+                ->select('id')
+                ->orderBy('id')
+                ->limit(2)
+                ->get();
+
+            if ($activeGyms->count() === 1) {
+                $gymId = $activeGyms->first()->id;
+            }
+        }
+
         $checkIn = CheckIn::create([
             'membership_id' => $membership->id,
             'team_id' => $team->id,
-            'gym_id' => $data['gym_id'] ?? null,
+            'gym_id' => $gymId,
             'checked_in_by' => $staffUserId,
             'method' => CheckInMethod::from($data['method']),
         ]);

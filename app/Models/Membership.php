@@ -61,6 +61,11 @@ class Membership extends Model
         return $this->hasMany(CheckIn::class);
     }
 
+    public function notes(): HasMany
+    {
+        return $this->hasMany(MembershipNote::class);
+    }
+
     public function regenerateAccessCode(): void
     {
         do {

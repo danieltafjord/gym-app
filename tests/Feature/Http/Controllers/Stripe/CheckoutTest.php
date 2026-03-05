@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\BillingPeriod;
 use App\Enums\PlanType;
 use App\Models\Gym;
 use App\Models\MembershipPlan;
@@ -122,6 +123,67 @@ it('creates a subscription intent for recurring plans', function () {
         ->assertJson([
             'clientSecret' => 'pi_secret_test',
             'subscriptionId' => 'sub_test_123',
+        ]);
+});
+
+it('creates a yearly subscription intent when yearly billing period is selected', function () {
+    $user = User::factory()->create(['stripe_customer_id' => 'cus_test_123']);
+    $team = Team::factory()->create([
+        'is_active' => true,
+        'stripe_account_id' => 'acct_test',
+        'stripe_onboarding_complete' => true,
+    ]);
+    $gym = Gym::factory()->create(['team_id' => $team->id, 'is_active' => true]);
+    $plan = MembershipPlan::factory()->create([
+        'team_id' => $team->id,
+        'is_active' => true,
+        'plan_type' => PlanType::Recurring,
+        'billing_period' => BillingPeriod::Monthly,
+        'price_cents' => 4999,
+        'yearly_price_cents' => 49990,
+        'stripe_price_id' => 'price_test_monthly',
+        'stripe_yearly_price_id' => 'price_test_yearly',
+    ]);
+
+    $mockSubscription = \Stripe\Subscription::constructFrom([
+        'id' => 'sub_test_yearly',
+        'latest_invoice' => [
+            'id' => 'in_test',
+            'object' => 'invoice',
+            'payment_intent' => [
+                'id' => 'pi_test',
+                'object' => 'payment_intent',
+                'client_secret' => 'pi_secret_test',
+            ],
+        ],
+    ]);
+
+    $mockStripe = Mockery::mock(StripeService::class);
+    $mockStripe->shouldReceive('getOrCreateCustomerForCheckout')
+        ->once()
+        ->andReturn('cus_test_123');
+    $mockStripe->shouldReceive('createSubscription')
+        ->once()
+        ->with('cus_test_123', 'price_test_yearly', 'acct_test')
+        ->andReturn($mockSubscription);
+
+    $this->app->instance(StripeService::class, $mockStripe);
+
+    $this->actingAs($user)
+        ->postJson(route('public.checkout.intent', [
+            'team' => $team,
+            'gym' => $gym->slug,
+            'membershipPlan' => $plan,
+        ]), [
+            'name' => 'Test User',
+            'email' => 'test@example.com',
+            'billing_period' => 'yearly',
+        ])
+        ->assertSuccessful()
+        ->assertJson([
+            'clientSecret' => 'pi_secret_test',
+            'subscriptionId' => 'sub_test_yearly',
+            'billingPeriod' => 'yearly',
         ]);
 });
 
@@ -341,6 +403,61 @@ it('allows full checkout flow in dev mode without stripe', function () {
         'membership_plan_id' => $plan->id,
         'stripe_status' => 'dev_mode',
     ]);
+});
+
+it('creates yearly membership period from dev mode recurring checkout', function () {
+    \Illuminate\Support\Carbon::setTestNow('2026-01-15');
+    config()->set('stripe.dev_mode', true);
+
+    $team = Team::factory()->create(['is_active' => true]);
+    $gym = Gym::factory()->create(['team_id' => $team->id, 'is_active' => true]);
+    $plan = MembershipPlan::factory()->create([
+        'team_id' => $team->id,
+        'is_active' => true,
+        'plan_type' => PlanType::Recurring,
+        'billing_period' => BillingPeriod::Monthly,
+        'price_cents' => 4999,
+        'yearly_price_cents' => 49990,
+    ]);
+
+    $intentResponse = $this->postJson(route('public.checkout.intent', [
+        'team' => $team,
+        'gym' => $gym->slug,
+        'membershipPlan' => $plan,
+    ]), [
+        'name' => 'Yearly User',
+        'email' => 'yearly@example.com',
+        'billing_period' => 'yearly',
+    ]);
+
+    $intentResponse->assertSuccessful();
+
+    $subscriptionId = $intentResponse->json('subscriptionId');
+
+    expect($subscriptionId)->toStartWith('dev_sub_');
+
+    $successResponse = $this->get(route('public.checkout.success', [
+        'team' => $team,
+        'gym' => $gym->slug,
+        'subscription_id' => $subscriptionId,
+        'membership_plan' => $plan->id,
+        'billing_period' => 'yearly',
+    ]));
+
+    $successResponse->assertSuccessful()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('public/checkout-success')
+            ->where('selectedBillingPeriod', 'yearly')
+            ->where('selectedPriceFormatted', '499.90')
+        );
+
+    $this->assertDatabaseHas('memberships', [
+        'email' => 'yearly@example.com',
+        'membership_plan_id' => $plan->id,
+        'ends_at' => '2027-01-15 00:00:00',
+    ]);
+
+    \Illuminate\Support\Carbon::setTestNow();
 });
 
 it('generates unique access code on membership creation', function () {

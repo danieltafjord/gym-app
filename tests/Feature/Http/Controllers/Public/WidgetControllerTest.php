@@ -7,7 +7,12 @@ use App\Models\Team;
 it('returns widget data for an active gym', function () {
     $team = Team::factory()->create(['is_active' => true]);
     $gym = Gym::factory()->create(['team_id' => $team->id, 'is_active' => true]);
-    MembershipPlan::factory()->create(['team_id' => $team->id, 'is_active' => true]);
+    MembershipPlan::factory()->create([
+        'team_id' => $team->id,
+        'is_active' => true,
+        'price_cents' => 4999,
+        'yearly_price_cents' => 49990,
+    ]);
 
     $this->getJson(route('widget.data', ['team' => $team->slug, 'gym' => $gym->slug]))
         ->assertOk()
@@ -22,6 +27,28 @@ it('returns widget data for an active gym', function () {
             'checkout_confirm_url',
             'stripe_ready',
         ]);
+});
+
+it('includes yearly pricing fields for plans in widget data', function () {
+    $team = Team::factory()->create(['is_active' => true]);
+    $gym = Gym::factory()->create(['team_id' => $team->id, 'is_active' => true]);
+    MembershipPlan::factory()->create([
+        'team_id' => $team->id,
+        'is_active' => true,
+        'price_cents' => 5999,
+        'yearly_price_cents' => 59990,
+    ]);
+
+    $response = $this->getJson(route('widget.data', ['team' => $team->slug, 'gym' => $gym->slug]))
+        ->assertOk();
+
+    $plan = $response->json('plans.0');
+
+    expect($plan)
+        ->toHaveKey('yearly_price_cents')
+        ->toHaveKey('yearly_price_formatted')
+        ->and($plan['yearly_price_cents'])->toBe(59990)
+        ->and($plan['yearly_price_formatted'])->toBe('599.90');
 });
 
 it('returns 404 for inactive team', function () {
@@ -89,6 +116,7 @@ it('includes widget settings with defaults', function () {
     expect($settings['primary_color'])->toBe('#2563eb');
     expect($settings['columns'])->toBe(3);
     expect($settings['button_text'])->toBe('Sign Up');
+    expect($settings['yearly_toggle_promo_text'])->toBe('Get 1 month free');
 });
 
 it('includes custom widget settings when configured', function () {
@@ -96,7 +124,11 @@ it('includes custom widget settings when configured', function () {
     $gym = Gym::factory()->withWidgetSettings()->create([
         'team_id' => $team->id,
         'is_active' => true,
-        'widget_settings' => ['primary_color' => '#ff0000', 'columns' => 2],
+        'widget_settings' => [
+            'primary_color' => '#ff0000',
+            'columns' => 2,
+            'yearly_toggle_promo_text' => 'Get 1 month free',
+        ],
     ]);
 
     $response = $this->getJson(route('widget.data', ['team' => $team->slug, 'gym' => $gym->slug]))
@@ -105,6 +137,7 @@ it('includes custom widget settings when configured', function () {
     $settings = $response->json('settings');
     expect($settings['primary_color'])->toBe('#ff0000');
     expect($settings['columns'])->toBe(2);
+    expect($settings['yearly_toggle_promo_text'])->toBe('Get 1 month free');
     // Defaults should still be present for unset values
     expect($settings['button_text'])->toBe('Sign Up');
 });
@@ -123,4 +156,15 @@ it('serves embed.js with correct content type', function () {
         ->assertOk()
         ->assertHeader('Content-Type', 'application/javascript')
         ->assertHeader('Access-Control-Allow-Origin', '*');
+});
+
+it('serves embed.js with the improved billing toggle markup', function () {
+    $response = $this->get(route('widget.script'))
+        ->assertOk();
+
+    expect($response->getContent())
+        ->toContain('gymapp-billing-toggle-promo')
+        ->toContain('settings.yearly_toggle_promo_text')
+        ->toContain("target.closest('[data-billing-toggle]')")
+        ->toContain('aria-pressed="');
 });

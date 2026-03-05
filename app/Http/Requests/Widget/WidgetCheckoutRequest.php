@@ -16,6 +16,7 @@ class WidgetCheckoutRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255'],
             'phone' => ['nullable', 'string', 'max:50'],
+            'billing_period' => ['nullable', 'string', 'in:monthly,yearly'],
         ];
     }
 }

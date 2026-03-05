@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Public;
 
 use App\Actions\Membership\CreateMembership;
+use App\Enums\BillingPeriod;
 use App\Enums\PlanType;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Widget\WidgetCheckoutConfirmRequest;
@@ -32,8 +33,12 @@ class WidgetCheckoutController extends Controller
 
         if (! $devMode) {
             abort_unless($team->hasStripeAccount(), 404);
-            abort_unless($membershipPlan->stripe_price_id, 422);
         }
+
+        $selectedBillingPeriod = $this->resolveCheckoutBillingPeriod(
+            $membershipPlan,
+            $request->validated('billing_period'),
+        );
 
         if ($devMode) {
             $fakeId = $membershipPlan->plan_type === PlanType::Recurring
@@ -46,6 +51,7 @@ class WidgetCheckoutController extends Controller
                 'paymentIntentId' => $membershipPlan->plan_type === PlanType::OneTime ? $fakeId : null,
                 'devMode' => true,
                 'membershipPlanId' => $membershipPlan->id,
+                'billingPeriod' => $selectedBillingPeriod->value,
             ]);
         }
 
@@ -56,15 +62,20 @@ class WidgetCheckoutController extends Controller
         );
 
         if ($membershipPlan->plan_type === PlanType::Recurring) {
+            $stripePriceId = $membershipPlan->stripePriceIdForBillingPeriod($selectedBillingPeriod);
+
+            abort_unless($stripePriceId, 422);
+
             $subscription = $stripe->createSubscription(
                 $customerId,
-                $membershipPlan->stripe_price_id,
+                $stripePriceId,
                 $team->stripe_account_id,
             );
 
             return response()->json([
                 'clientSecret' => $subscription->latest_invoice->payment_intent->client_secret,
                 'subscriptionId' => $subscription->id,
+                'billingPeriod' => $selectedBillingPeriod->value,
             ]);
         }
 
@@ -99,6 +110,10 @@ class WidgetCheckoutController extends Controller
         $subscriptionId = $request->validated('subscription_id');
         $paymentIntentId = $request->validated('payment_intent_id');
         $devMode = (bool) config('stripe.dev_mode');
+        $selectedBillingPeriod = $this->resolveCheckoutBillingPeriod(
+            $plan,
+            $request->validated('billing_period'),
+        );
 
         // Idempotency: check for existing membership
         $existingMembership = Membership::query()
@@ -107,7 +122,7 @@ class WidgetCheckoutController extends Controller
             ->first();
 
         if ($existingMembership) {
-            return $this->buildConfirmResponse($existingMembership);
+            return $this->buildConfirmResponse($existingMembership, $selectedBillingPeriod);
         }
 
         // Verify payment status
@@ -123,6 +138,13 @@ class WidgetCheckoutController extends Controller
                 $subscription = $stripe->retrieveSubscription($subscriptionId);
                 $stripeStatus = $subscription->status;
                 abort_unless(in_array($stripeStatus, ['active', 'trialing']), 422, 'Payment has not been completed.');
+
+                $subscriptionPriceId = data_get($subscription, 'items.data.0.price.id');
+                if (is_string($subscriptionPriceId)) {
+                    $selectedBillingPeriod = $plan->hasYearlyPricingOption() && $plan->stripe_yearly_price_id === $subscriptionPriceId
+                        ? BillingPeriod::Yearly
+                        : $plan->billing_period;
+                }
             } elseif ($paymentIntentId) {
                 $paymentIntent = $stripe->retrievePaymentIntent($paymentIntentId);
                 $stripeStatus = $paymentIntent->status;
@@ -131,14 +153,15 @@ class WidgetCheckoutController extends Controller
         }
 
         $membership = $createMembership->handle(
-            null,
-            $plan,
-            $request->validated('email'),
-            $request->validated('name'),
-            $request->validated('phone'),
-            $subscriptionId,
-            $paymentIntentId,
-            $stripeStatus,
+            user: null,
+            plan: $plan,
+            email: $request->validated('email'),
+            customerName: $request->validated('name'),
+            customerPhone: $request->validated('phone'),
+            stripeSubscriptionId: $subscriptionId,
+            stripePaymentIntentId: $paymentIntentId,
+            stripeStatus: $stripeStatus,
+            billingPeriod: $selectedBillingPeriod,
         );
 
         Mail::to($request->validated('email'))->send(new MembershipConfirmationMail(
@@ -146,12 +169,19 @@ class WidgetCheckoutController extends Controller
             $gymModel,
         ));
 
-        return $this->buildConfirmResponse($membership);
+        return $this->buildConfirmResponse($membership, $selectedBillingPeriod);
     }
 
-    private function buildConfirmResponse(Membership $membership): JsonResponse
-    {
+    private function buildConfirmResponse(
+        Membership $membership,
+        BillingPeriod $selectedBillingPeriod,
+    ): JsonResponse {
         $membership->loadMissing('plan');
+
+        $priceFormatted = $selectedBillingPeriod === BillingPeriod::Yearly
+            && $membership->plan->yearly_price_formatted !== null
+            ? $membership->plan->yearly_price_formatted
+            : $membership->plan->price_formatted;
 
         return response()->json([
             'membership' => [
@@ -162,11 +192,38 @@ class WidgetCheckoutController extends Controller
             ],
             'plan' => [
                 'name' => $membership->plan->name,
-                'price_formatted' => $membership->plan->price_formatted,
-                'billing_period' => $membership->plan->billing_period->value,
+                'price_formatted' => $priceFormatted,
+                'billing_period' => $selectedBillingPeriod->value,
                 'plan_type' => $membership->plan->plan_type->value,
             ],
             'email' => $membership->email,
         ]);
+    }
+
+    private function resolveCheckoutBillingPeriod(
+        MembershipPlan $membershipPlan,
+        ?string $billingPeriod,
+    ): BillingPeriod {
+        if ($membershipPlan->plan_type !== PlanType::Recurring) {
+            return $membershipPlan->billing_period;
+        }
+
+        if ($billingPeriod === null) {
+            return $membershipPlan->billing_period;
+        }
+
+        $selectedBillingPeriod = BillingPeriod::tryFrom($billingPeriod);
+
+        abort_unless($selectedBillingPeriod, 422);
+
+        if ($selectedBillingPeriod === BillingPeriod::Yearly) {
+            abort_unless($membershipPlan->hasYearlyPricingOption(), 422);
+
+            return BillingPeriod::Yearly;
+        }
+
+        abort_unless($selectedBillingPeriod === $membershipPlan->billing_period, 422);
+
+        return $selectedBillingPeriod;
     }
 }

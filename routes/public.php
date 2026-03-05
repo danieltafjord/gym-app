@@ -11,6 +11,7 @@ Route::post('kiosk/{team}/{gym}', [CheckInKioskController::class, 'store'])->nam
 
 Route::get('{team}', [PublicGymController::class, 'showTeam'])->name('public.team');
 Route::get('{team}/{gym}', [PublicGymController::class, 'showGym'])->name('public.gym');
+Route::get('{team}/{gym}/widget', [PublicGymController::class, 'widget'])->name('public.widget');
 
 Route::get('{team}/{gym}/checkout/success', [CheckoutController::class, 'success'])->name('public.checkout.success');
 Route::get('{team}/{gym}/checkout/{membershipPlan}', [CheckoutController::class, 'show'])->name('public.checkout');

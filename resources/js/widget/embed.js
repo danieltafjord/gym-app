@@ -2,7 +2,9 @@
     'use strict';
 
     var SCRIPT = document.currentScript;
-    var BASE_URL = SCRIPT ? SCRIPT.src.replace(/\/widget\/embed\.js.*$/, '') : '';
+    var BASE_URL = SCRIPT
+        ? SCRIPT.src.replace(/\/widget\/embed\.js.*$/, '')
+        : '';
 
     function escapeHtml(str) {
         if (!str) return '';
@@ -14,7 +16,11 @@
     function hexToRgb(hex) {
         var r = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
         return r
-            ? parseInt(r[1], 16) + ',' + parseInt(r[2], 16) + ',' + parseInt(r[3], 16)
+            ? parseInt(r[1], 16) +
+                  ',' +
+                  parseInt(r[2], 16) +
+                  ',' +
+                  parseInt(r[3], 16)
             : '0,0,0';
     }
 
@@ -47,15 +53,84 @@
             '  grid-template-columns: repeat(' + cols + ', 1fr);',
             '  gap: 20px;',
             '}',
+            '.gymapp-billing-toggle-wrap {',
+            '  margin-bottom: 16px;',
+            '  display: flex;',
+            '  justify-content: center;',
+            '}',
+            '.gymapp-billing-toggle {',
+            '  display: inline-flex;',
+            '  align-items: center;',
+            '  gap: 4px;',
+            '  padding: 4px;',
+            '  border-radius: 12px;',
+            '  max-width: 100%;',
+            '  background: rgba(' + pRgb + ', 0.92);',
+            '  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);',
+            '}',
+            '.gymapp-billing-toggle-btn {',
+            '  display: inline-flex;',
+            '  align-items: center;',
+            '  justify-content: center;',
+            '  gap: 8px;',
+            '  border: none;',
+            '  background: transparent;',
+            '  color: rgba(255,255,255,0.82);',
+            '  font-family: inherit;',
+            '  font-size: 0.75rem;',
+            '  font-weight: 600;',
+            '  line-height: 1;',
+            '  border-radius: 8px;',
+            '  padding: 10px 14px;',
+            '  cursor: pointer;',
+            '  transition: all 0.15s ease;',
+            '  text-align: center;',
+            '}',
+            '.gymapp-billing-toggle-btn:hover {',
+            '  color: #ffffff;',
+            '}',
+            '.gymapp-billing-toggle-btn.is-active {',
+            '  background: #ffffff;',
+            '  color: ' + escapeHtml(settings.text_color) + ';',
+            '  box-shadow: 0 1px 3px rgba(0,0,0,0.1);',
+            '}',
+            '.gymapp-billing-toggle-btn--yearly {',
+            '  flex-wrap: wrap;',
+            '}',
+            '.gymapp-billing-toggle-promo {',
+            '  display: inline-flex;',
+            '  align-items: center;',
+            '  gap: 4px;',
+            '  font-size: 0.6875rem;',
+            '  font-weight: 700;',
+            '  line-height: 1;',
+            '  color: #db2777;',
+            '}',
+            '.gymapp-billing-toggle-promo svg { flex-shrink: 0; }',
+            '.gymapp-billing-toggle-btn.is-active .gymapp-billing-toggle-promo {',
+            '  color: #db2777;',
+            '}',
+            '.gymapp-billing-toggle-btn:not(.is-active) .gymapp-billing-toggle-promo {',
+            '  color: rgba(255,255,255,0.92);',
+            '}',
+            '@media (max-width: 480px) {',
+            '  .gymapp-billing-toggle { width: 100%; justify-content: center; }',
+            '  .gymapp-billing-toggle-btn { flex: 1 1 0; }',
+            '  .gymapp-billing-toggle-btn--yearly { gap: 4px; }',
+            '}',
             '@media (max-width: 640px) {',
             '  .gymapp-grid { grid-template-columns: 1fr; }',
             '}',
             '@media (min-width: 641px) and (max-width: 1024px) {',
-            '  .gymapp-grid { grid-template-columns: repeat(' + Math.min(cols, 2) + ', 1fr); }',
+            '  .gymapp-grid { grid-template-columns: repeat(' +
+                Math.min(cols, 2) +
+                ', 1fr); }',
             '}',
             '',
             '.gymapp-card {',
-            '  border: 1px solid ' + escapeHtml(settings.card_border_color) + ';',
+            '  border: 1px solid ' +
+                escapeHtml(settings.card_border_color) +
+                ';',
             '  border-radius: ' + cardR + 'px;',
             '  padding: 28px;',
             '  display: flex;',
@@ -112,6 +187,12 @@
             '  background: rgba(' + sRgb + ', 0.07);',
             '  border-radius: 100px;',
             '  font-weight: 500;',
+            '}',
+            '.gymapp-discount {',
+            '  font-size: 0.75rem;',
+            '  color: ' + escapeHtml(settings.primary_color) + ';',
+            '  margin: 8px 0 0;',
+            '  font-weight: 600;',
             '}',
             '',
             '.gymapp-divider {',
@@ -175,7 +256,9 @@
             '.gymapp-btn-secondary {',
             '  background: transparent;',
             '  color: ' + escapeHtml(settings.primary_color) + ';',
-            '  border: 1px solid ' + escapeHtml(settings.card_border_color) + ';',
+            '  border: 1px solid ' +
+                escapeHtml(settings.card_border_color) +
+                ';',
             '  box-shadow: none;',
             '}',
             '.gymapp-btn-secondary:hover {',
@@ -211,7 +294,9 @@
             '.gymapp-spinner {',
             '  width: 28px;',
             '  height: 28px;',
-            '  border: 2.5px solid ' + escapeHtml(settings.card_border_color) + ';',
+            '  border: 2.5px solid ' +
+                escapeHtml(settings.card_border_color) +
+                ';',
             '  border-top-color: ' + escapeHtml(settings.primary_color) + ';',
             '  border-radius: 50%;',
             '  animation: gymapp-spin 0.7s linear infinite;',
@@ -266,7 +351,9 @@
             '  letter-spacing: -0.01em;',
             '}',
             '.gymapp-plan-summary {',
-            '  border: 1px solid ' + escapeHtml(settings.card_border_color) + ';',
+            '  border: 1px solid ' +
+                escapeHtml(settings.card_border_color) +
+                ';',
             '  border-radius: ' + cardR + 'px;',
             '  padding: 16px 20px;',
             '  margin-bottom: 28px;',
@@ -281,6 +368,12 @@
             '  font-size: 0.8125rem;',
             '  color: ' + escapeHtml(settings.secondary_text_color) + ';',
             '  margin: 0;',
+            '}',
+            '.gymapp-plan-summary-note {',
+            '  font-size: 0.75rem;',
+            '  color: ' + escapeHtml(settings.primary_color) + ';',
+            '  margin: 6px 0 0;',
+            '  font-weight: 600;',
             '}',
             '',
             '.gymapp-form-group { margin-bottom: 18px; }',
@@ -396,7 +489,9 @@
             '  color: ' + escapeHtml(settings.text_color) + ';',
             '}',
             '.gymapp-success-details {',
-            '  border: 1px solid ' + escapeHtml(settings.card_border_color) + ';',
+            '  border: 1px solid ' +
+                escapeHtml(settings.card_border_color) +
+                ';',
             '  border-radius: ' + cardR + 'px;',
             '  padding: 16px 20px;',
             '  margin: 20px 0;',
@@ -477,85 +572,344 @@
         return labels[period] || '';
     }
 
-    function checkSvg(color) {
-        return '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M12 5L6.5 10.5L4 8" stroke="' + escapeHtml(color) + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    function formatCents(cents) {
+        return (Number(cents || 0) / 100).toFixed(2);
     }
 
-    function renderPlans(data) {
+    function hasYearlyPricingOption(plan) {
+        return (
+            plan &&
+            plan.plan_type === 'recurring' &&
+            plan.billing_period === 'monthly' &&
+            !isNaN(Number(plan.yearly_price_cents)) &&
+            Number(plan.yearly_price_cents) > 0
+        );
+    }
+
+    function hasAnyYearlyPricingOption(plans) {
+        for (var i = 0; i < plans.length; i++) {
+            if (hasYearlyPricingOption(plans[i])) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    function resolveDisplayBillingPeriod(plan, preferredBillingPeriod) {
+        if (plan.plan_type !== 'recurring') {
+            return plan.billing_period;
+        }
+
+        if (
+            preferredBillingPeriod === 'yearly' &&
+            hasYearlyPricingOption(plan)
+        ) {
+            return 'yearly';
+        }
+
+        return plan.billing_period;
+    }
+
+    function resolveDisplayPriceFormatted(plan, displayBillingPeriod) {
+        if (displayBillingPeriod === 'yearly' && hasYearlyPricingOption(plan)) {
+            if (plan.yearly_price_formatted) {
+                return plan.yearly_price_formatted;
+            }
+
+            return formatCents(plan.yearly_price_cents);
+        }
+
+        return plan.price_formatted;
+    }
+
+    function resolveMonthlyDiscountLabel(plan, displayBillingPeriod) {
+        if (
+            displayBillingPeriod !== 'yearly' ||
+            !hasYearlyPricingOption(plan)
+        ) {
+            return '';
+        }
+
+        var monthlyCents = Number(plan.price_cents || 0);
+        var yearlyMonthlyEquivalentCents = Math.round(
+            Number(plan.yearly_price_cents) / 12,
+        );
+        var savingsCents = monthlyCents - yearlyMonthlyEquivalentCents;
+
+        if (savingsCents <= 0) {
+            return '';
+        }
+
+        return (
+            'Save $' + formatCents(savingsCents) + '/month with yearly billing'
+        );
+    }
+
+    function resolveYearlySavingsMonths(plan) {
+        if (!hasYearlyPricingOption(plan)) {
+            return 0;
+        }
+
+        var monthlyCents = Number(plan.price_cents || 0);
+        if (monthlyCents <= 0) {
+            return 0;
+        }
+
+        var yearlyCents = Number(plan.yearly_price_cents || 0);
+        var totalSavingsCents = monthlyCents * 12 - yearlyCents;
+
+        if (totalSavingsCents <= 0) {
+            return 0;
+        }
+
+        return totalSavingsCents / monthlyCents;
+    }
+
+    function resolveYearlyTogglePromoText(plans, configuredPromoText) {
+        var trimmedPromoText = String(configuredPromoText || '').trim();
+
+        if (trimmedPromoText !== '') {
+            return trimmedPromoText;
+        }
+
+        var bestMonthsFree = 0;
+
+        for (var i = 0; i < plans.length; i++) {
+            bestMonthsFree = Math.max(
+                bestMonthsFree,
+                resolveYearlySavingsMonths(plans[i]),
+            );
+        }
+
+        if (bestMonthsFree >= 0.95) {
+            var roundedMonths = Math.max(1, Math.round(bestMonthsFree));
+            return (
+                'Get ' +
+                roundedMonths +
+                ' month' +
+                (roundedMonths > 1 ? 's' : '') +
+                ' free'
+            );
+        }
+
+        return '';
+    }
+
+    function checkSvg(color) {
+        return (
+            '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M12 5L6.5 10.5L4 8" stroke="' +
+            escapeHtml(color) +
+            '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+        );
+    }
+
+    function promoTagSvg() {
+        return '<svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M6.25 1.5H10.5V5.75L5.75 10.5L1.5 6.25L6.25 1.5Z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8.5" cy="3.5" r="0.6" fill="currentColor"/></svg>';
+    }
+
+    function renderPlans(data, preferredBillingPeriod) {
         var settings = data.settings;
         var plans = data.plans;
+        var toggleBillingPeriod =
+            preferredBillingPeriod === 'yearly' ? 'yearly' : 'monthly';
+        var showBillingToggle = hasAnyYearlyPricingOption(plans);
+        var yearlyTogglePromoText = resolveYearlyTogglePromoText(
+            plans,
+            settings.yearly_toggle_promo_text,
+        );
 
         if (!plans || plans.length === 0) {
             return '<div class="gymapp-error">No plans available at this time.</div>';
         }
 
-        var html = '<div class="gymapp-grid">';
+        var html = '';
+
+        if (showBillingToggle) {
+            html += '<div class="gymapp-billing-toggle-wrap">';
+            html +=
+                '<div class="gymapp-billing-toggle" role="tablist" aria-label="Billing period">';
+            html +=
+                '<button type="button" class="gymapp-billing-toggle-btn ' +
+                (toggleBillingPeriod === 'monthly' ? 'is-active' : '') +
+                '" data-billing-toggle="monthly" aria-pressed="' +
+                (toggleBillingPeriod === 'monthly' ? 'true' : 'false') +
+                '">Monthly</button>';
+            html +=
+                '<button type="button" class="gymapp-billing-toggle-btn gymapp-billing-toggle-btn--yearly ' +
+                (toggleBillingPeriod === 'yearly' ? 'is-active' : '') +
+                '" data-billing-toggle="yearly" aria-pressed="' +
+                (toggleBillingPeriod === 'yearly' ? 'true' : 'false') +
+                '">';
+            html += '<span>Yearly</span>';
+            if (yearlyTogglePromoText) {
+                html +=
+                    '<span class="gymapp-billing-toggle-promo">' +
+                    promoTagSvg() +
+                    '<span>' +
+                    escapeHtml(yearlyTogglePromoText) +
+                    '</span></span>';
+            }
+            html += '</button>';
+            html += '</div>';
+            html += '</div>';
+        }
+
+        html += '<div class="gymapp-grid">';
 
         for (var i = 0; i < plans.length; i++) {
             var plan = plans[i];
             var delay = (i * 0.06).toFixed(2);
+            var displayBillingPeriod = resolveDisplayBillingPeriod(
+                plan,
+                toggleBillingPeriod,
+            );
+            var displayPriceFormatted = resolveDisplayPriceFormatted(
+                plan,
+                displayBillingPeriod,
+            );
+            var billingLabel =
+                plan.plan_type === 'one_time'
+                    ? 'One-time payment'
+                    : formatBillingPeriod(displayBillingPeriod);
+            var discountLabel = resolveMonthlyDiscountLabel(
+                plan,
+                displayBillingPeriod,
+            );
 
-            html += '<div class="gymapp-card" style="animation-delay:' + delay + 's">';
-            html += '<p class="gymapp-plan-name">' + escapeHtml(plan.name) + '</p>';
+            html +=
+                '<div class="gymapp-card" style="animation-delay:' +
+                delay +
+                's">';
+            html +=
+                '<p class="gymapp-plan-name">' + escapeHtml(plan.name) + '</p>';
 
             if (settings.show_description && plan.description) {
-                html += '<p class="gymapp-plan-description">' + escapeHtml(plan.description) + '</p>';
+                html +=
+                    '<p class="gymapp-plan-description">' +
+                    escapeHtml(plan.description) +
+                    '</p>';
             }
 
             html += '<div class="gymapp-price-section">';
-            html += '<p class="gymapp-price"><span class="gymapp-price-currency">$</span>' + escapeHtml(plan.price_formatted) + '</p>';
-            html += '<p class="gymapp-billing">' + escapeHtml(plan.plan_type === 'one_time' ? 'One-time payment' : formatBillingPeriod(plan.billing_period)) + '</p>';
+            html +=
+                '<p class="gymapp-price"><span class="gymapp-price-currency">$</span>' +
+                escapeHtml(displayPriceFormatted) +
+                '</p>';
+            html +=
+                '<p class="gymapp-billing">' +
+                escapeHtml(billingLabel) +
+                '</p>';
+            if (discountLabel) {
+                html +=
+                    '<p class="gymapp-discount">' +
+                    escapeHtml(discountLabel) +
+                    '</p>';
+            }
             html += '</div>';
 
-            if (settings.show_features && plan.features && plan.features.length > 0) {
+            if (
+                settings.show_features &&
+                plan.features &&
+                plan.features.length > 0
+            ) {
                 html += '<div class="gymapp-divider"></div>';
                 html += '<ul class="gymapp-features">';
                 for (var j = 0; j < plan.features.length; j++) {
-                    html += '<li>' + checkSvg(settings.primary_color) + escapeHtml(plan.features[j]) + '</li>';
+                    html +=
+                        '<li>' +
+                        checkSvg(settings.primary_color) +
+                        escapeHtml(plan.features[j]) +
+                        '</li>';
                 }
                 html += '</ul>';
             }
 
-            html += '<button class="gymapp-btn" data-select-plan="' + plan.id + '">' + escapeHtml(settings.button_text || 'Sign Up') + '</button>';
+            html +=
+                '<button class="gymapp-btn" data-select-plan="' +
+                plan.id +
+                '">' +
+                escapeHtml(settings.button_text || 'Sign Up') +
+                '</button>';
             html += '</div>';
         }
 
         html += '</div>';
-        html += '<div class="gymapp-powered">Powered by <a href="' + escapeHtml(BASE_URL) + '" target="_blank" rel="noopener">GymApp</a></div>';
+        html +=
+            '<div class="gymapp-powered">Powered by <a href="' +
+            escapeHtml(BASE_URL) +
+            '" target="_blank" rel="noopener">GymApp</a></div>';
 
         return html;
     }
 
-    function renderCheckoutForm(plan, settings) {
-        var billingLabel = plan.plan_type === 'one_time' ? 'One-time payment' : formatBillingPeriod(plan.billing_period);
+    function renderCheckoutForm(plan, settings, selectedBillingPeriod) {
+        var displayBillingPeriod = resolveDisplayBillingPeriod(
+            plan,
+            selectedBillingPeriod,
+        );
+        var displayPriceFormatted = resolveDisplayPriceFormatted(
+            plan,
+            displayBillingPeriod,
+        );
+        var billingLabel =
+            plan.plan_type === 'one_time'
+                ? 'One-time payment'
+                : formatBillingPeriod(displayBillingPeriod);
+        var discountLabel = resolveMonthlyDiscountLabel(
+            plan,
+            displayBillingPeriod,
+        );
 
         var html = '<div class="gymapp-checkout">';
         html += '<div class="gymapp-checkout-header">';
-        html += '<button class="gymapp-back-link" data-back-plans>\u2190 Back to plans</button>';
+        html +=
+            '<button class="gymapp-back-link" data-back-plans>\u2190 Back to plans</button>';
         html += '<h2 class="gymapp-checkout-title">Complete your signup</h2>';
         html += '</div>';
 
         html += '<div class="gymapp-plan-summary">';
-        html += '<p class="gymapp-plan-summary-name">' + escapeHtml(plan.name) + '</p>';
-        html += '<p class="gymapp-plan-summary-price">$' + escapeHtml(plan.price_formatted) + ' ' + escapeHtml(billingLabel) + '</p>';
+        html +=
+            '<p class="gymapp-plan-summary-name">' +
+            escapeHtml(plan.name) +
+            '</p>';
+        html +=
+            '<p class="gymapp-plan-summary-price">$' +
+            escapeHtml(displayPriceFormatted) +
+            ' ' +
+            escapeHtml(billingLabel) +
+            '</p>';
+        if (discountLabel) {
+            html +=
+                '<p class="gymapp-plan-summary-note">' +
+                escapeHtml(discountLabel) +
+                '</p>';
+        }
         html += '</div>';
 
         html += '<div class="gymapp-form-group">';
-        html += '<label class="gymapp-label" for="gymapp-name">Full Name *</label>';
-        html += '<input class="gymapp-input" type="text" id="gymapp-name" name="name" required autocomplete="name">';
+        html +=
+            '<label class="gymapp-label" for="gymapp-name">Full Name *</label>';
+        html +=
+            '<input class="gymapp-input" type="text" id="gymapp-name" name="name" required autocomplete="name">';
         html += '</div>';
 
         html += '<div class="gymapp-form-group">';
-        html += '<label class="gymapp-label" for="gymapp-email">Email *</label>';
-        html += '<input class="gymapp-input" type="email" id="gymapp-email" name="email" required autocomplete="email">';
+        html +=
+            '<label class="gymapp-label" for="gymapp-email">Email *</label>';
+        html +=
+            '<input class="gymapp-input" type="email" id="gymapp-email" name="email" required autocomplete="email">';
         html += '</div>';
 
         html += '<div class="gymapp-form-group">';
-        html += '<label class="gymapp-label" for="gymapp-phone">Phone (optional)</label>';
-        html += '<input class="gymapp-input" type="tel" id="gymapp-phone" name="phone" autocomplete="tel">';
+        html +=
+            '<label class="gymapp-label" for="gymapp-phone">Phone (optional)</label>';
+        html +=
+            '<input class="gymapp-input" type="tel" id="gymapp-phone" name="phone" autocomplete="tel">';
         html += '</div>';
 
-        html += '<button class="gymapp-btn" data-submit-contact>Continue to Payment \u2192</button>';
+        html +=
+            '<button class="gymapp-btn" data-submit-contact>Continue to Payment \u2192</button>';
         html += '</div>';
 
         return html;
@@ -564,13 +918,16 @@
     function renderPaymentForm(settings, devMode) {
         var html = '<div class="gymapp-checkout">';
         html += '<div class="gymapp-checkout-header">';
-        html += '<button class="gymapp-back-link" data-back-checkout>\u2190 Back</button>';
+        html +=
+            '<button class="gymapp-back-link" data-back-checkout>\u2190 Back</button>';
         html += '<h2 class="gymapp-checkout-title">Payment details</h2>';
         html += '</div>';
 
         if (devMode) {
-            html += '<div class="gymapp-dev-banner">Development Mode &mdash; No real payment will be charged</div>';
-            html += '<button class="gymapp-btn" data-simulate-payment>Complete Test Payment</button>';
+            html +=
+                '<div class="gymapp-dev-banner">Development Mode &mdash; No real payment will be charged</div>';
+            html +=
+                '<button class="gymapp-btn" data-simulate-payment>Complete Test Payment</button>';
         } else {
             html += '<div id="gymapp-payment-element"></div>';
             html += '<button class="gymapp-btn" data-pay-now>Pay Now</button>';
@@ -588,44 +945,84 @@
         var m = result.membership;
         var p = result.plan;
 
-        var billingLabel = p.plan_type === 'one_time' ? 'One-time payment' : formatBillingPeriod(p.billing_period);
+        var billingLabel =
+            p.plan_type === 'one_time'
+                ? 'One-time payment'
+                : formatBillingPeriod(p.billing_period);
 
         var html = '<div class="gymapp-success">';
-        html += '<div class="gymapp-success-icon"><svg width="28" height="28" viewBox="0 0 28 28" fill="none"><path d="M20 10L12 18L8 14" stroke="' + escapeHtml(settings.button_text_color) + '" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>';
-        html += '<h2>' + escapeHtml(settings.success_heading || "You\u2019re all set!") + '</h2>';
-        html += '<p>' + escapeHtml(settings.success_message || 'Your membership is now active.') + '</p>';
+        html +=
+            '<div class="gymapp-success-icon"><svg width="28" height="28" viewBox="0 0 28 28" fill="none"><path d="M20 10L12 18L8 14" stroke="' +
+            escapeHtml(settings.button_text_color) +
+            '" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>';
+        html +=
+            '<h2>' +
+            escapeHtml(settings.success_heading || 'You\u2019re all set!') +
+            '</h2>';
+        html +=
+            '<p>' +
+            escapeHtml(
+                settings.success_message || 'Your membership is now active.',
+            ) +
+            '</p>';
 
         if (settings.show_access_code !== false) {
             html += '<div class="gymapp-access-code-section">';
             html += '<p class="gymapp-access-code-label">Your access code</p>';
-            html += '<div class="gymapp-access-code">' + escapeHtml(m.access_code) + '</div>';
+            html +=
+                '<div class="gymapp-access-code">' +
+                escapeHtml(m.access_code) +
+                '</div>';
             html += '</div>';
         }
 
         if (settings.show_success_details !== false) {
             html += '<div class="gymapp-success-details">';
-            html += '<div><dt>Plan:</dt><dd>' + escapeHtml(p.name) + '</dd></div>';
-            html += '<div><dt>Price:</dt><dd>$' + escapeHtml(p.price_formatted) + ' ' + escapeHtml(billingLabel) + '</dd></div>';
-            html += '<div><dt>Starts:</dt><dd>' + escapeHtml(m.starts_at) + '</dd></div>';
+            html +=
+                '<div><dt>Plan:</dt><dd>' + escapeHtml(p.name) + '</dd></div>';
+            html +=
+                '<div><dt>Price:</dt><dd>$' +
+                escapeHtml(p.price_formatted) +
+                ' ' +
+                escapeHtml(billingLabel) +
+                '</dd></div>';
+            html +=
+                '<div><dt>Starts:</dt><dd>' +
+                escapeHtml(m.starts_at) +
+                '</dd></div>';
             if (m.ends_at) {
-                html += '<div><dt>Ends:</dt><dd>' + escapeHtml(m.ends_at) + '</dd></div>';
+                html +=
+                    '<div><dt>Ends:</dt><dd>' +
+                    escapeHtml(m.ends_at) +
+                    '</dd></div>';
             }
             html += '</div>';
         }
 
-        html += '<p>A confirmation has been sent to ' + escapeHtml(result.email) + '</p>';
+        html +=
+            '<p>A confirmation has been sent to ' +
+            escapeHtml(result.email) +
+            '</p>';
 
         if (settings.show_cta_card !== false) {
-            var registerUrl = BASE_URL + '/register?email=' + encodeURIComponent(result.email);
+            var registerUrl =
+                BASE_URL +
+                '/register?email=' +
+                encodeURIComponent(result.email);
             html += '<div class="gymapp-cta-card">';
             html += '<h3>Create an Account</h3>';
-            html += '<p>Manage your membership, view billing history, and update your details all in one place.</p>';
-            html += '<a class="gymapp-btn" href="' + escapeHtml(registerUrl) + '" target="_blank" rel="noopener">Create Free Account</a>';
+            html +=
+                '<p>Manage your membership, view billing history, and update your details all in one place.</p>';
+            html +=
+                '<a class="gymapp-btn" href="' +
+                escapeHtml(registerUrl) +
+                '" target="_blank" rel="noopener">Create Free Account</a>';
             html += '</div>';
         }
 
         html += '<div class="gymapp-btn-group">';
-        html += '<button class="gymapp-btn gymapp-btn-secondary" data-back-plans>Browse Plans</button>';
+        html +=
+            '<button class="gymapp-btn gymapp-btn-secondary" data-back-plans>Browse Plans</button>';
         html += '</div>';
         html += '</div>';
 
@@ -634,13 +1031,16 @@
 
     function renderError(message, canRetry) {
         var html = '<div class="gymapp-error-view">';
-        html += '<div class="gymapp-error-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M15 9L9 15M9 9L15 15" stroke="#dc2626" stroke-width="2" stroke-linecap="round"/></svg></div>';
+        html +=
+            '<div class="gymapp-error-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M15 9L9 15M9 9L15 15" stroke="#dc2626" stroke-width="2" stroke-linecap="round"/></svg></div>';
         html += '<p>' + escapeHtml(message) + '</p>';
         html += '<div class="gymapp-error-actions">';
         if (canRetry) {
-            html += '<button class="gymapp-btn" data-back-checkout>Try Again</button>';
+            html +=
+                '<button class="gymapp-btn" data-back-checkout>Try Again</button>';
         }
-        html += '<button class="gymapp-btn gymapp-btn-secondary" data-back-plans>Back to Plans</button>';
+        html +=
+            '<button class="gymapp-btn gymapp-btn-secondary" data-back-plans>Back to Plans</button>';
         html += '</div>';
         html += '</div>';
         return html;
@@ -654,8 +1054,12 @@
             }
             var script = document.createElement('script');
             script.src = 'https://js.stripe.com/v3/';
-            script.onload = function () { resolve(window.Stripe); };
-            script.onerror = function () { reject(new Error('Failed to load Stripe.js')); };
+            script.onload = function () {
+                resolve(window.Stripe);
+            };
+            script.onerror = function () {
+                reject(new Error('Failed to load Stripe.js'));
+            };
             document.head.appendChild(script);
         });
     }
@@ -665,7 +1069,8 @@
         var gymSlug = container.getAttribute('data-gym');
 
         if (!teamSlug || !gymSlug) {
-            container.textContent = 'Widget error: missing data-team or data-gym attribute.';
+            container.textContent =
+                'Widget error: missing data-team or data-gym attribute.';
             return;
         }
 
@@ -694,13 +1099,21 @@
         });
         shadow.insertBefore(style, wrapper);
 
-        wrapper.innerHTML = '<div class="gymapp-loading"><div class="gymapp-spinner"></div></div>';
+        wrapper.innerHTML =
+            '<div class="gymapp-loading"><div class="gymapp-spinner"></div></div>';
 
-        var apiUrl = BASE_URL + '/widget/' + encodeURIComponent(teamSlug) + '/' + encodeURIComponent(gymSlug);
+        var apiUrl =
+            BASE_URL +
+            '/widget/' +
+            encodeURIComponent(teamSlug) +
+            '/' +
+            encodeURIComponent(gymSlug);
 
         // Widget state
         var widgetData = null;
         var selectedPlan = null;
+        var preferredBillingPeriod = 'monthly';
+        var selectedPlanBillingPeriod = 'monthly';
         var contactInfo = {};
         var intentResult = null;
         var stripeInstance = null;
@@ -719,11 +1132,18 @@
                     selectedPlan = null;
                     intentResult = null;
                     stripeElements = null;
-                    wrapper.innerHTML = renderPlans(widgetData);
+                    wrapper.innerHTML = renderPlans(
+                        widgetData,
+                        preferredBillingPeriod,
+                    );
                     break;
 
                 case 'checkout':
-                    wrapper.innerHTML = renderCheckoutForm(selectedPlan, widgetData.settings);
+                    wrapper.innerHTML = renderCheckoutForm(
+                        selectedPlan,
+                        widgetData.settings,
+                        selectedPlanBillingPeriod,
+                    );
                     // Restore contact info if going back
                     if (contactInfo.name) {
                         var nameInput = shadow.querySelector('#gymapp-name');
@@ -731,13 +1151,21 @@
                         var phoneInput = shadow.querySelector('#gymapp-phone');
                         if (nameInput) nameInput.value = contactInfo.name;
                         if (emailInput) emailInput.value = contactInfo.email;
-                        if (phoneInput) phoneInput.value = contactInfo.phone || '';
+                        if (phoneInput)
+                            phoneInput.value = contactInfo.phone || '';
                     }
                     break;
 
                 case 'payment':
-                    wrapper.innerHTML = renderPaymentForm(widgetData.settings, intentResult && intentResult.devMode);
-                    if (intentResult && !intentResult.devMode && intentResult.clientSecret) {
+                    wrapper.innerHTML = renderPaymentForm(
+                        widgetData.settings,
+                        intentResult && intentResult.devMode,
+                    );
+                    if (
+                        intentResult &&
+                        !intentResult.devMode &&
+                        intentResult.clientSecret
+                    ) {
                         mountPaymentElement();
                     }
                     break;
@@ -747,11 +1175,17 @@
                     break;
 
                 case 'success':
-                    wrapper.innerHTML = renderSuccess(extraData, widgetData.settings);
+                    wrapper.innerHTML = renderSuccess(
+                        extraData,
+                        widgetData.settings,
+                    );
                     break;
 
                 case 'error':
-                    wrapper.innerHTML = renderError(extraData.message, extraData.canRetry !== false);
+                    wrapper.innerHTML = renderError(
+                        extraData.message,
+                        extraData.canRetry !== false,
+                    );
                     break;
             }
         }
@@ -766,16 +1200,23 @@
 
         function getContactInfo() {
             var name = (shadow.querySelector('#gymapp-name') || {}).value || '';
-            var email = (shadow.querySelector('#gymapp-email') || {}).value || '';
-            var phone = (shadow.querySelector('#gymapp-phone') || {}).value || '';
-            return { name: name.trim(), email: email.trim(), phone: phone.trim() };
+            var email =
+                (shadow.querySelector('#gymapp-email') || {}).value || '';
+            var phone =
+                (shadow.querySelector('#gymapp-phone') || {}).value || '';
+            return {
+                name: name.trim(),
+                email: email.trim(),
+                phone: phone.trim(),
+            };
         }
 
         function validateContact(info) {
             var errors = {};
             if (!info.name) errors.name = 'Name is required.';
             if (!info.email) errors.email = 'Email is required.';
-            else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(info.email)) errors.email = 'Please enter a valid email.';
+            else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(info.email))
+                errors.email = 'Please enter a valid email.';
             return errors;
         }
 
@@ -784,7 +1225,8 @@
             var existing = shadow.querySelectorAll('.gymapp-field-error');
             for (var i = 0; i < existing.length; i++) existing[i].remove();
             var errorInputs = shadow.querySelectorAll('.gymapp-input-error');
-            for (var i = 0; i < errorInputs.length; i++) errorInputs[i].classList.remove('gymapp-input-error');
+            for (var i = 0; i < errorInputs.length; i++)
+                errorInputs[i].classList.remove('gymapp-input-error');
 
             for (var field in errors) {
                 var input = shadow.querySelector('#gymapp-' + field);
@@ -818,6 +1260,10 @@
                 }
             }
             if (selectedPlan) {
+                selectedPlanBillingPeriod = resolveDisplayBillingPeriod(
+                    selectedPlan,
+                    preferredBillingPeriod,
+                );
                 showView('checkout');
             }
         }
@@ -834,27 +1280,56 @@
             contactInfo = info;
             setButtonLoading('[data-submit-contact]', true);
 
-            var intentUrl = widgetData.checkout_intent_url.replace('__PLAN_ID__', selectedPlan.id);
+            var intentUrl = widgetData.checkout_intent_url.replace(
+                '__PLAN_ID__',
+                selectedPlan.id,
+            );
 
             fetch(intentUrl, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                body: JSON.stringify({
-                    name: info.name,
-                    email: info.email,
-                    phone: info.phone || null,
-                }),
+                headers: {
+                    'Content-Type': 'application/json',
+                    Accept: 'application/json',
+                },
+                body: JSON.stringify(
+                    (function () {
+                        var body = {
+                            name: info.name,
+                            email: info.email,
+                            phone: info.phone || null,
+                        };
+
+                        if (
+                            selectedPlan.plan_type === 'recurring' &&
+                            (selectedPlanBillingPeriod === 'monthly' ||
+                                selectedPlanBillingPeriod === 'yearly')
+                        ) {
+                            body.billing_period = selectedPlanBillingPeriod;
+                        }
+
+                        return body;
+                    })(),
+                ),
             })
                 .then(function (response) {
                     if (!response.ok) {
                         return response.json().then(function (data) {
-                            throw new Error(data.message || 'Failed to start checkout.');
+                            throw new Error(
+                                data.message || 'Failed to start checkout.',
+                            );
                         });
                     }
                     return response.json();
                 })
                 .then(function (data) {
                     intentResult = data;
+
+                    if (
+                        data.billingPeriod === 'monthly' ||
+                        data.billingPeriod === 'yearly'
+                    ) {
+                        selectedPlanBillingPeriod = data.billingPeriod;
+                    }
 
                     if (data.devMode) {
                         showView('payment');
@@ -872,7 +1347,12 @@
                 })
                 .catch(function (err) {
                     setButtonLoading('[data-submit-contact]', false);
-                    showView('error', { message: err.message || 'Something went wrong. Please try again.', canRetry: true });
+                    showView('error', {
+                        message:
+                            err.message ||
+                            'Something went wrong. Please try again.',
+                        canRetry: true,
+                    });
                 });
         }
 
@@ -881,7 +1361,22 @@
 
             setButtonLoading('[data-pay-now]', true);
 
-            var returnUrl = BASE_URL + '/' + encodeURIComponent(teamSlug) + '/' + encodeURIComponent(gymSlug) + '/checkout/success';
+            var returnUrl =
+                BASE_URL +
+                '/' +
+                encodeURIComponent(teamSlug) +
+                '/' +
+                encodeURIComponent(gymSlug) +
+                '/checkout/success';
+
+            if (
+                selectedPlanBillingPeriod === 'monthly' ||
+                selectedPlanBillingPeriod === 'yearly'
+            ) {
+                returnUrl +=
+                    '?billing_period=' +
+                    encodeURIComponent(selectedPlanBillingPeriod);
+            }
 
             var confirmParams = {
                 return_url: returnUrl,
@@ -894,23 +1389,29 @@
             };
 
             if (contactInfo.phone) {
-                confirmParams.payment_method_data.billing_details.phone = contactInfo.phone;
+                confirmParams.payment_method_data.billing_details.phone =
+                    contactInfo.phone;
             }
 
             showView('processing');
 
-            stripeInstance.confirmPayment({
-                elements: stripeElements,
-                redirect: 'if_required',
-                confirmParams: confirmParams,
-            }).then(function (result) {
-                if (result.error) {
-                    showView('error', { message: result.error.message, canRetry: true });
-                    return;
-                }
+            stripeInstance
+                .confirmPayment({
+                    elements: stripeElements,
+                    redirect: 'if_required',
+                    confirmParams: confirmParams,
+                })
+                .then(function (result) {
+                    if (result.error) {
+                        showView('error', {
+                            message: result.error.message,
+                            canRetry: true,
+                        });
+                        return;
+                    }
 
-                callConfirm();
-            });
+                    callConfirm();
+                });
         }
 
         function handleSimulatePayment() {
@@ -926,18 +1427,33 @@
                 phone: contactInfo.phone || null,
             };
 
-            if (intentResult.subscriptionId) body.subscription_id = intentResult.subscriptionId;
-            if (intentResult.paymentIntentId) body.payment_intent_id = intentResult.paymentIntentId;
+            if (
+                selectedPlan.plan_type === 'recurring' &&
+                (selectedPlanBillingPeriod === 'monthly' ||
+                    selectedPlanBillingPeriod === 'yearly')
+            ) {
+                body.billing_period = selectedPlanBillingPeriod;
+            }
+
+            if (intentResult.subscriptionId)
+                body.subscription_id = intentResult.subscriptionId;
+            if (intentResult.paymentIntentId)
+                body.payment_intent_id = intentResult.paymentIntentId;
 
             fetch(widgetData.checkout_confirm_url, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    Accept: 'application/json',
+                },
                 body: JSON.stringify(body),
             })
                 .then(function (response) {
                     if (!response.ok) {
                         return response.json().then(function (data) {
-                            throw new Error(data.message || 'Failed to confirm membership.');
+                            throw new Error(
+                                data.message || 'Failed to confirm membership.',
+                            );
                         });
                     }
                     return response.json();
@@ -946,45 +1462,85 @@
                     showView('success', data);
                 })
                 .catch(function (err) {
-                    showView('error', { message: err.message || 'Something went wrong. Please try again.', canRetry: false });
+                    showView('error', {
+                        message:
+                            err.message ||
+                            'Something went wrong. Please try again.',
+                        canRetry: false,
+                    });
                 });
         }
 
         // Event delegation
         wrapper.addEventListener('click', function (e) {
             var target = e.target;
+            var selectPlanTarget;
+            var billingToggleTarget;
+            var backPlansTarget;
+            var backCheckoutTarget;
+            var submitContactTarget;
+            var payNowTarget;
+            var simulatePaymentTarget;
 
-            if (target.hasAttribute('data-select-plan')) {
-                e.preventDefault();
-                handleSelectPlan(target.getAttribute('data-select-plan'));
+            if (target && target.nodeType !== 1) {
+                target = target.parentElement;
+            }
+
+            if (!target) {
                 return;
             }
 
-            if (target.hasAttribute('data-back-plans')) {
+            selectPlanTarget = target.closest('[data-select-plan]');
+            if (selectPlanTarget) {
+                e.preventDefault();
+                handleSelectPlan(
+                    selectPlanTarget.getAttribute('data-select-plan'),
+                );
+                return;
+            }
+
+            billingToggleTarget = target.closest('[data-billing-toggle]');
+            if (billingToggleTarget) {
+                e.preventDefault();
+                preferredBillingPeriod =
+                    billingToggleTarget.getAttribute('data-billing-toggle') ===
+                    'yearly'
+                        ? 'yearly'
+                        : 'monthly';
+                showView('plans');
+                return;
+            }
+
+            backPlansTarget = target.closest('[data-back-plans]');
+            if (backPlansTarget) {
                 e.preventDefault();
                 showView('plans');
                 return;
             }
 
-            if (target.hasAttribute('data-back-checkout')) {
+            backCheckoutTarget = target.closest('[data-back-checkout]');
+            if (backCheckoutTarget) {
                 e.preventDefault();
                 showView('checkout');
                 return;
             }
 
-            if (target.hasAttribute('data-submit-contact')) {
+            submitContactTarget = target.closest('[data-submit-contact]');
+            if (submitContactTarget) {
                 e.preventDefault();
                 handleSubmitContact();
                 return;
             }
 
-            if (target.hasAttribute('data-pay-now')) {
+            payNowTarget = target.closest('[data-pay-now]');
+            if (payNowTarget) {
                 e.preventDefault();
                 handlePayNow();
                 return;
             }
 
-            if (target.hasAttribute('data-simulate-payment')) {
+            simulatePaymentTarget = target.closest('[data-simulate-payment]');
+            if (simulatePaymentTarget) {
                 e.preventDefault();
                 handleSimulatePayment();
                 return;
@@ -1005,7 +1561,8 @@
                 showView('plans');
             })
             .catch(function () {
-                wrapper.innerHTML = '<div class="gymapp-error">Unable to load membership plans. Please try again later.</div>';
+                wrapper.innerHTML =
+                    '<div class="gymapp-error">Unable to load membership plans. Please try again later.</div>';
             });
     }
 

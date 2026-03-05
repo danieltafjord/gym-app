@@ -9,6 +9,24 @@ use Illuminate\Validation\Rule;
 
 class UpdateMembershipPlanRequest extends FormRequest
 {
+    protected function prepareForValidation(): void
+    {
+        $features = $this->input('features');
+
+        if (! is_string($features)) {
+            return;
+        }
+
+        $normalizedFeatures = array_values(array_filter(array_map(
+            static fn (string $feature): string => trim($feature),
+            explode(',', $features)
+        ), static fn (string $feature): bool => $feature !== ''));
+
+        $this->merge([
+            'features' => $normalizedFeatures === [] ? null : $normalizedFeatures,
+        ]);
+    }
+
     /**
      * Get the validation rules that apply to the request.
      *
@@ -20,6 +38,7 @@ class UpdateMembershipPlanRequest extends FormRequest
             'name' => ['sometimes', 'required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:1000'],
             'price_cents' => ['sometimes', 'required', 'integer', 'min:0'],
+            'yearly_price_cents' => ['nullable', 'integer', 'min:0'],
             'billing_period' => ['sometimes', 'required', 'string', Rule::in(BillingPeriod::cases())],
             'features' => ['nullable', 'array'],
             'features.*' => ['string'],

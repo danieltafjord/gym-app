@@ -9,9 +9,11 @@ import team from '@/routes/team';
 export default function PlanIndex({
     team: currentTeam,
     plans,
+    publicPlansUrl,
 }: {
     team: Team;
     plans: PaginatedData<MembershipPlan>;
+    publicPlansUrl: string;
 }) {
     const breadcrumbs: BreadcrumbItem[] = [
         {
@@ -24,13 +26,6 @@ export default function PlanIndex({
         },
     ];
 
-    const billingPeriodLabel: Record<string, string> = {
-        weekly: 'Weekly',
-        monthly: 'Monthly',
-        quarterly: 'Quarterly',
-        yearly: 'Yearly',
-    };
-
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`${currentTeam.name} - Plans`} />
@@ -38,11 +33,18 @@ export default function PlanIndex({
             <div className="space-y-6 p-4">
                 <div className="flex items-center justify-between">
                     <Heading title="Membership Plans" description="Manage your team's membership plans." />
-                    <Button asChild>
-                        <Link href={team.plans.create(currentTeam.slug).url}>
-                            Add Plan
-                        </Link>
-                    </Button>
+                    <div className="flex items-center gap-2">
+                        <Button variant="outline" asChild>
+                            <Link href={publicPlansUrl} target="_blank" rel="noopener noreferrer">
+                                View Public Plans
+                            </Link>
+                        </Button>
+                        <Button asChild>
+                            <Link href={team.plans.create(currentTeam.slug).url}>
+                                Add Plan
+                            </Link>
+                        </Button>
+                    </div>
                 </div>
 
                 <div className="overflow-hidden rounded-lg border">
@@ -50,8 +52,8 @@ export default function PlanIndex({
                         <thead className="border-b bg-muted/50">
                             <tr>
                                 <th className="px-4 py-3 text-left font-medium">Name</th>
-                                <th className="px-4 py-3 text-left font-medium">Price</th>
-                                <th className="px-4 py-3 text-left font-medium">Billing Period</th>
+                                <th className="px-4 py-3 text-left font-medium">Monthly Price</th>
+                                <th className="px-4 py-3 text-left font-medium">Yearly Price</th>
                                 <th className="px-4 py-3 text-left font-medium">Status</th>
                                 <th className="px-4 py-3 text-right font-medium">Actions</th>
                             </tr>
@@ -76,24 +78,26 @@ export default function PlanIndex({
                                             {plan.price_formatted}
                                         </td>
                                         <td className="px-4 py-3 text-muted-foreground">
-                                            {billingPeriodLabel[plan.billing_period] ?? plan.billing_period}
+                                            {plan.yearly_price_formatted ?? '—'}
                                         </td>
                                         <td className="px-4 py-3">
                                             <Badge variant={plan.is_active ? 'default' : 'secondary'}>
                                                 {plan.is_active ? 'Active' : 'Inactive'}
                                             </Badge>
                                         </td>
-                                        <td className="px-4 py-3 text-right">
-                                            <Button variant="ghost" size="sm" asChild>
-                                                <Link
-                                                    href={team.plans.edit({
-                                                        team: currentTeam.slug,
-                                                        plan: plan.id,
-                                                    }).url}
-                                                >
-                                                    Edit
-                                                </Link>
-                                            </Button>
+                                        <td className="px-4 py-3">
+                                            <div className="flex items-center justify-end">
+                                                <Button variant="ghost" size="sm" asChild>
+                                                    <Link
+                                                        href={team.plans.edit({
+                                                            team: currentTeam.slug,
+                                                            plan: plan.id,
+                                                        }).url}
+                                                    >
+                                                        Edit
+                                                    </Link>
+                                                </Button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))

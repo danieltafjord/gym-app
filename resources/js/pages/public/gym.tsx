@@ -1,5 +1,6 @@
 import { Head, Link } from '@inertiajs/react';
-import { MapPin, Mail, Phone } from 'lucide-react';
+import { MapPin, Mail, Phone, Tag } from 'lucide-react';
+import { useState } from 'react';
 import Heading from '@/components/heading';
 import { Button } from '@/components/ui/button';
 import {
@@ -18,9 +19,110 @@ interface Props {
     gym: Gym;
     plans: MembershipPlan[];
     stripeReady: boolean;
+    widgetDemoUrl: string;
 }
 
-export default function PublicGym({ team, gym, plans, stripeReady }: Props) {
+function hasYearlyPricingOption(plan: MembershipPlan): boolean {
+    return plan.plan_type === 'recurring'
+        && plan.billing_period === 'monthly'
+        && plan.yearly_price_cents !== null
+        && plan.yearly_price_cents > 0;
+}
+
+function formatCents(cents: number): string {
+    return (cents / 100).toFixed(2);
+}
+
+function resolveDisplayBillingPeriod(
+    plan: MembershipPlan,
+    preferredBillingPeriod: 'monthly' | 'yearly',
+): MembershipPlan['billing_period'] {
+    if (plan.plan_type !== 'recurring') {
+        return plan.billing_period;
+    }
+
+    if (preferredBillingPeriod === 'yearly' && hasYearlyPricingOption(plan)) {
+        return 'yearly';
+    }
+
+    return plan.billing_period;
+}
+
+function resolveDisplayPriceFormatted(
+    plan: MembershipPlan,
+    displayBillingPeriod: MembershipPlan['billing_period'],
+): string {
+    if (displayBillingPeriod === 'yearly' && hasYearlyPricingOption(plan)) {
+        return plan.yearly_price_formatted ?? formatCents(plan.yearly_price_cents ?? 0);
+    }
+
+    return plan.price_formatted;
+}
+
+function resolveMonthlyDiscountLabel(
+    plan: MembershipPlan,
+    displayBillingPeriod: MembershipPlan['billing_period'],
+): string | null {
+    if (displayBillingPeriod !== 'yearly' || !hasYearlyPricingOption(plan)) {
+        return null;
+    }
+
+    const monthlyCents = plan.price_cents;
+    const yearlyMonthlyEquivalentCents = Math.round((plan.yearly_price_cents ?? 0) / 12);
+    const savingsCents = monthlyCents - yearlyMonthlyEquivalentCents;
+
+    if (savingsCents <= 0) {
+        return null;
+    }
+
+    return `Save $${formatCents(savingsCents)}/month with yearly billing`;
+}
+
+function resolveYearlySavingsMonths(plan: MembershipPlan): number {
+    if (!hasYearlyPricingOption(plan)) {
+        return 0;
+    }
+
+    const monthlyCents = plan.price_cents;
+    if (monthlyCents <= 0) {
+        return 0;
+    }
+
+    const yearlyCents = plan.yearly_price_cents ?? 0;
+    const totalSavingsCents = (monthlyCents * 12) - yearlyCents;
+
+    if (totalSavingsCents <= 0) {
+        return 0;
+    }
+
+    return totalSavingsCents / monthlyCents;
+}
+
+function resolveYearlyTogglePromoText(plans: MembershipPlan[]): string | null {
+    const bestMonthsFree = plans.reduce((maxMonths, plan) => {
+        return Math.max(maxMonths, resolveYearlySavingsMonths(plan));
+    }, 0);
+
+    if (bestMonthsFree >= 0.95) {
+        const roundedMonths = Math.max(1, Math.round(bestMonthsFree));
+
+        return `Get ${roundedMonths} month${roundedMonths > 1 ? 's' : ''} free`;
+    }
+
+    return null;
+}
+
+export default function PublicGym({
+    team,
+    gym,
+    plans,
+    stripeReady,
+    widgetDemoUrl,
+}: Props) {
+    const [preferredBillingPeriod, setPreferredBillingPeriod] = useState<'monthly' | 'yearly'>('monthly');
+    const showBillingToggle = plans.some(hasYearlyPricingOption);
+    const yearlyTogglePromoText = resolveYearlyTogglePromoText(plans);
+
     return (
         <PublicLayout>
             <Head title={`${gym.name} - ${team.name}`} />
@@ -59,12 +161,73 @@ export default function PublicGym({ team, gym, plans, stripeReady }: Props) {
 
             {plans.length > 0 ? (
                 <section>
-                    <h3 className="mb-4 text-lg font-semibold tracking-tight">
-                        Membership Plans
-                    </h3>
+                    <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                        <h3 className="text-lg font-semibold tracking-tight">
+                            Membership Plans
+                        </h3>
+
+                        <div className="flex items-center gap-2">
+                            {showBillingToggle && (
+                                <div className="inline-flex rounded-xl bg-primary/90 p-1 shadow-sm">
+                                    <button
+                                        type="button"
+                                        className={`rounded-lg px-3 py-2 text-xs font-semibold transition ${
+                                            preferredBillingPeriod === 'monthly'
+                                                ? 'bg-white text-foreground shadow-sm'
+                                                : 'text-primary-foreground/80 hover:text-primary-foreground'
+                                        }`}
+                                        onClick={() => setPreferredBillingPeriod('monthly')}
+                                    >
+                                        Monthly
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold transition ${
+                                            preferredBillingPeriod === 'yearly'
+                                                ? 'bg-white text-foreground shadow-sm'
+                                                : 'text-primary-foreground/80 hover:text-primary-foreground'
+                                        }`}
+                                        onClick={() => setPreferredBillingPeriod('yearly')}
+                                    >
+                                        <span>Yearly</span>
+                                        {yearlyTogglePromoText && (
+                                            <span
+                                                className={`inline-flex items-center gap-1 text-[11px] font-bold ${
+                                                    preferredBillingPeriod === 'yearly'
+                                                        ? 'text-pink-600'
+                                                        : 'text-primary-foreground'
+                                                }`}
+                                            >
+                                                <Tag className="size-3" />
+                                                {yearlyTogglePromoText}
+                                            </span>
+                                        )}
+                                    </button>
+                                </div>
+                            )}
+
+                            <Button variant="outline" asChild>
+                                <Link href={widgetDemoUrl}>Widget Demo</Link>
+                            </Button>
+                        </div>
+                    </div>
                     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                        {plans.map((plan) => (
-                            <Card key={plan.id}>
+                        {plans.map((plan) => {
+                            const displayBillingPeriod = resolveDisplayBillingPeriod(
+                                plan,
+                                preferredBillingPeriod,
+                            );
+                            const displayPriceFormatted = resolveDisplayPriceFormatted(
+                                plan,
+                                displayBillingPeriod,
+                            );
+                            const discountLabel = resolveMonthlyDiscountLabel(
+                                plan,
+                                displayBillingPeriod,
+                            );
+
+                            return (
+                                <Card key={plan.id}>
                                 <CardHeader>
                                     <CardTitle>{plan.name}</CardTitle>
                                     {plan.description && (
@@ -74,13 +237,20 @@ export default function PublicGym({ team, gym, plans, stripeReady }: Props) {
                                     )}
                                 </CardHeader>
                                 <CardContent className="space-y-4">
-                                    <div className="flex items-baseline gap-1">
-                                        <span className="text-2xl font-bold">
-                                            ${plan.price_formatted}
-                                        </span>
-                                        <span className="text-sm text-muted-foreground">
-                                            /{plan.billing_period}
-                                        </span>
+                                    <div className="space-y-1">
+                                        <div className="flex items-baseline gap-1">
+                                            <span className="text-2xl font-bold">
+                                                ${displayPriceFormatted}
+                                            </span>
+                                            <span className="text-sm text-muted-foreground">
+                                                /{displayBillingPeriod}
+                                            </span>
+                                        </div>
+                                        {discountLabel && (
+                                            <p className="text-sm font-medium text-primary">
+                                                {discountLabel}
+                                            </p>
+                                        )}
                                     </div>
 
                                     {plan.features && plan.features.length > 0 && (
@@ -104,6 +274,10 @@ export default function PublicGym({ team, gym, plans, stripeReady }: Props) {
                                                         gym: gym.slug,
                                                         membershipPlan: plan.id,
                                                     },
+                                                    plan.plan_type === 'recurring'
+                                                        && (displayBillingPeriod === 'monthly' || displayBillingPeriod === 'yearly')
+                                                        ? { query: { billing_period: displayBillingPeriod } }
+                                                        : undefined,
                                                 ).url}
                                             >
                                                 Sign Up
@@ -111,8 +285,9 @@ export default function PublicGym({ team, gym, plans, stripeReady }: Props) {
                                         </Button>
                                     )}
                                 </CardContent>
-                            </Card>
-                        ))}
+                                </Card>
+                            );
+                        })}
                     </div>
                 </section>
             ) : (

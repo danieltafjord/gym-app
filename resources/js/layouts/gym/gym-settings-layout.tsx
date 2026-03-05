@@ -11,8 +11,14 @@ export default function GymSettingsLayout({
     teamSlug,
     gymSlug,
     gymName,
+    singleGymMode = false,
     children,
-}: PropsWithChildren<{ teamSlug: string; gymSlug: string; gymName: string }>) {
+}: PropsWithChildren<{
+    teamSlug: string;
+    gymSlug: string;
+    gymName: string;
+    singleGymMode?: boolean;
+}>) {
     const { isCurrentUrl } = useCurrentUrl();
 
     const sidebarNavItems = [
@@ -40,7 +46,11 @@ export default function GymSettingsLayout({
         <div>
             <Heading
                 title="Gym Settings"
-                description={`Manage settings for ${gymName}.`}
+                description={
+                    singleGymMode
+                        ? 'Manage your gym settings.'
+                        : `Manage settings for ${gymName}.`
+                }
             />
 
             <div className="flex flex-col lg:flex-row lg:space-x-12">

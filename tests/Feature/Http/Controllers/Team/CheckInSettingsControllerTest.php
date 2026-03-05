@@ -78,6 +78,30 @@ it('updates check-in settings', function () {
     ]);
 });
 
+it('disables gym selection requirement when only one active gym exists', function () {
+    $user = User::factory()->create();
+    $team = Team::factory()->create(['owner_id' => $user->id]);
+    Gym::factory()->create(['team_id' => $team->id, 'is_active' => true]);
+
+    $this->actingAs($user)
+        ->patch(route('team.settings.check-in.update', $team), [
+            'enabled' => true,
+            'allowed_methods' => ['qr_scan'],
+            'require_gym_selection' => true,
+            'prevent_duplicate_minutes' => 5,
+            'kiosk_mode' => 'camera',
+        ])
+        ->assertRedirect();
+
+    expect($team->fresh()->check_in_settings)->toMatchArray([
+        'enabled' => true,
+        'allowed_methods' => ['qr_scan'],
+        'require_gym_selection' => false,
+        'prevent_duplicate_minutes' => 5,
+        'kiosk_mode' => 'camera',
+    ]);
+});
+
 it('validates allowed_methods is required and not empty', function () {
     $user = User::factory()->create();
     $team = Team::factory()->create(['owner_id' => $user->id]);

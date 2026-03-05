@@ -31,6 +31,7 @@ function validWidgetSettings(array $overrides = []): array
         'show_features' => true,
         'show_description' => true,
         'button_text' => 'Sign Up',
+        'yearly_toggle_promo_text' => 'Get 1 month free',
         'show_access_code' => true,
         'show_success_details' => true,
         'show_cta_card' => true,
@@ -90,6 +91,7 @@ it('loads default settings when none configured', function () {
             ->where('settings.button_text', 'Sign Up')
             ->where('settings.card_border_radius', 16)
             ->where('settings.button_border_radius', 8)
+            ->where('settings.yearly_toggle_promo_text', 'Get 1 month free')
             ->where('settings.success_heading', "You're all set!")
         );
 });
@@ -106,6 +108,7 @@ it('updates widget settings', function () {
         'columns' => 2,
         'show_description' => false,
         'button_text' => 'Join Now',
+        'yearly_toggle_promo_text' => 'Get 1 month free',
         'success_heading' => 'Welcome!',
         'show_cta_card' => false,
     ]);
@@ -118,10 +121,26 @@ it('updates widget settings', function () {
         'primary_color' => '#ff0000',
         'columns' => 2,
         'button_text' => 'Join Now',
+        'yearly_toggle_promo_text' => 'Get 1 month free',
         'card_border_radius' => 12,
         'success_heading' => 'Welcome!',
         'show_cta_card' => false,
     ]);
+});
+
+it('stores a blank yearly_toggle_promo_text as an empty string', function () {
+    $user = User::factory()->create();
+    $team = Team::factory()->create(['owner_id' => $user->id]);
+    $gym = Gym::factory()->create(['team_id' => $team->id]);
+
+    $this->actingAs($user)
+        ->patch(
+            route('team.gyms.settings.widget.update', ['team' => $team, 'gym' => $gym]),
+            validWidgetSettings(['yearly_toggle_promo_text' => '']),
+        )
+        ->assertRedirect();
+
+    expect($gym->fresh()->widget_settings['yearly_toggle_promo_text'])->toBe('');
 });
 
 it('validates hex color format', function () {
@@ -207,6 +226,19 @@ it('validates button_text max length', function () {
             validWidgetSettings(['button_text' => str_repeat('a', 51)]),
         )
         ->assertSessionHasErrors('button_text');
+});
+
+it('validates yearly_toggle_promo_text max length', function () {
+    $user = User::factory()->create();
+    $team = Team::factory()->create(['owner_id' => $user->id]);
+    $gym = Gym::factory()->create(['team_id' => $team->id]);
+
+    $this->actingAs($user)
+        ->patch(
+            route('team.gyms.settings.widget.update', ['team' => $team, 'gym' => $gym]),
+            validWidgetSettings(['yearly_toggle_promo_text' => str_repeat('a', 51)]),
+        )
+        ->assertSessionHasErrors('yearly_toggle_promo_text');
 });
 
 it('validates success_heading max length', function () {

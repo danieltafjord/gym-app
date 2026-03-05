@@ -18,9 +18,14 @@ class MembershipPlanController extends Controller
 {
     public function index(Team $team): Response
     {
+        $firstActiveGym = $team->gyms()->active()->orderBy('id')->first();
+
         return Inertia::render('team/plans/index', [
             'team' => $team,
             'plans' => $team->membershipPlans()->ordered()->paginate(15),
+            'publicPlansUrl' => $firstActiveGym
+                ? route('public.gym', ['team' => $team->slug, 'gym' => $firstActiveGym->slug])
+                : route('public.team', $team->slug),
         ]);
     }
 

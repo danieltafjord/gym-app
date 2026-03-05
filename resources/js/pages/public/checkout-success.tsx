@@ -14,6 +14,8 @@ interface Props {
     plan: MembershipPlan;
     membership: Membership;
     email: string;
+    selectedBillingPeriod: 'weekly' | 'monthly' | 'quarterly' | 'yearly';
+    selectedPriceFormatted: string;
 }
 
 export default function CheckoutSuccess({
@@ -22,6 +24,8 @@ export default function CheckoutSuccess({
     plan,
     membership,
     email,
+    selectedBillingPeriod,
+    selectedPriceFormatted,
 }: Props) {
     const { auth } = usePage<{ auth: { user: Auth['user'] | null } }>().props;
 
@@ -51,9 +55,9 @@ export default function CheckoutSuccess({
                                         Amount
                                     </dt>
                                     <dd className="font-medium">
-                                        ${plan.price_formatted}
+                                        ${selectedPriceFormatted}
                                         {plan.plan_type === 'recurring'
-                                            ? `/${plan.billing_period}`
+                                            ? `/${selectedBillingPeriod}`
                                             : ''}
                                     </dd>
                                 </div>

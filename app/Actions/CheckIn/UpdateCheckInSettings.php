@@ -11,6 +11,10 @@ class UpdateCheckInSettings
      */
     public function handle(Team $team, array $settings): Team
     {
+        if ($team->gyms()->active()->count() <= 1) {
+            $settings['require_gym_selection'] = false;
+        }
+
         $team->update(['check_in_settings' => $settings]);
 
         return $team;

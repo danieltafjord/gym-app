@@ -1,4 +1,4 @@
-import type { Auth, ManagedTeam } from '@/types/auth';
+import type { Auth, CurrentTeam } from '@/types/auth';
 import type { CheckInResult } from '@/types/team';
 
 declare module '@inertiajs/core' {
@@ -6,7 +6,7 @@ declare module '@inertiajs/core' {
         sharedPageProps: {
             name: string;
             auth: Auth;
-            currentTeam: ManagedTeam | null;
+            currentTeam: CurrentTeam | null;
             sidebarOpen: boolean;
             flash: {
                 checkInResult?: CheckInResult;

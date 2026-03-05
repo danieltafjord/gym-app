@@ -4,9 +4,12 @@ use App\Http\Controllers\Team\CheckInController;
 use App\Http\Controllers\Team\CheckInSettingsController;
 use App\Http\Controllers\Team\GymController;
 use App\Http\Controllers\Team\MemberController;
+use App\Http\Controllers\Team\MemberExportController;
+use App\Http\Controllers\Team\MembershipNoteController;
 use App\Http\Controllers\Team\MembershipPlanController;
 use App\Http\Controllers\Team\StripeConnectController;
 use App\Http\Controllers\Team\TeamController;
+use App\Http\Controllers\Team\TeamGeneralSettingsController;
 use App\Http\Controllers\Team\TeamWidgetDefaultsController;
 use App\Http\Controllers\Team\WidgetSettingsController;
 use Illuminate\Support\Facades\Route;
@@ -54,13 +57,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('check-ins', [CheckInController::class, 'index'])->name('team.check-ins.index');
 
         // Members
+        Route::get('members/create', [MemberController::class, 'create'])->name('team.members.create');
+        Route::get('members/export', MemberExportController::class)->name('team.members.export');
+        Route::post('members', [MemberController::class, 'store'])->name('team.members.store');
         Route::get('members', [MemberController::class, 'index'])->name('team.members.index');
         Route::get('members/{membership}', [MemberController::class, 'show'])->name('team.members.show');
         Route::patch('members/{membership}', [MemberController::class, 'update'])->name('team.members.update');
+        Route::patch('members/{membership}/details', [MemberController::class, 'updateDetails'])->name('team.members.update-details');
+        Route::patch('members/{membership}/extend', [MemberController::class, 'extend'])->name('team.members.extend');
+        Route::post('members/{membership}/notes', [MembershipNoteController::class, 'store'])->name('team.members.notes.store');
         Route::delete('members/{membership}', [MemberController::class, 'destroy'])->name('team.members.destroy');
 
         // Settings
-        Route::get('settings', fn () => redirect()->route('team.settings.widget-defaults', ['team' => request()->route('team')]))->name('team.settings');
+        Route::get('settings', fn () => redirect()->route('team.settings.general', ['team' => request()->route('team')]))->name('team.settings');
+        Route::get('settings/general', [TeamGeneralSettingsController::class, 'edit'])->name('team.settings.general');
+        Route::patch('settings/general', [TeamGeneralSettingsController::class, 'update'])->name('team.settings.general.update');
         Route::get('settings/widget-defaults', [TeamWidgetDefaultsController::class, 'edit'])->name('team.settings.widget-defaults');
         Route::patch('settings/widget-defaults', [TeamWidgetDefaultsController::class, 'update'])->name('team.settings.widget-defaults.update');
         Route::get('settings/check-in', [CheckInSettingsController::class, 'edit'])->name('team.settings.check-in');

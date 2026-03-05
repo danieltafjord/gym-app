@@ -7,5 +7,8 @@ return [
     'connect_webhook_secret' => env('STRIPE_CONNECT_WEBHOOK_SECRET'),
     'application_fee_percent' => (int) env('STRIPE_APPLICATION_FEE_PERCENT', 10),
     'currency' => env('STRIPE_CURRENCY', 'usd'),
-    'dev_mode' => (bool) env('STRIPE_DEV_MODE', false),
+    'dev_mode' => filter_var(
+        env('STRIPE_DEV_MODE', env('APP_ENV', 'production') === 'local'),
+        FILTER_VALIDATE_BOOL
+    ),
 ];

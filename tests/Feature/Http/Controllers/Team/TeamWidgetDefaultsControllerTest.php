@@ -30,6 +30,7 @@ function validTeamWidgetSettings(array $overrides = []): array
         'show_features' => true,
         'show_description' => true,
         'button_text' => 'Sign Up',
+        'yearly_toggle_promo_text' => 'Get 1 month free',
         'show_access_code' => true,
         'show_success_details' => true,
         'show_cta_card' => true,
@@ -65,6 +66,7 @@ it('loads hardcoded defaults when team has no widget settings', function () {
             ->where('settings.primary_color', '#2563eb')
             ->where('settings.columns', 3)
             ->where('settings.button_text', 'Sign Up')
+            ->where('settings.yearly_toggle_promo_text', 'Get 1 month free')
         );
 });
 
@@ -109,6 +111,7 @@ it('updates team widget defaults', function () {
         'primary_color' => '#ff0000',
         'card_border_radius' => 12,
         'button_text' => 'Join Now',
+        'yearly_toggle_promo_text' => 'Get 1 month free',
     ]);
 
     $this->actingAs($user)
@@ -119,7 +122,22 @@ it('updates team widget defaults', function () {
         'primary_color' => '#ff0000',
         'card_border_radius' => 12,
         'button_text' => 'Join Now',
+        'yearly_toggle_promo_text' => 'Get 1 month free',
     ]);
+});
+
+it('stores a blank yearly_toggle_promo_text on team widget defaults as an empty string', function () {
+    $user = User::factory()->create();
+    $team = Team::factory()->create(['owner_id' => $user->id]);
+
+    $this->actingAs($user)
+        ->patch(
+            route('team.settings.widget-defaults.update', ['team' => $team]),
+            validTeamWidgetSettings(['yearly_toggle_promo_text' => '']),
+        )
+        ->assertRedirect();
+
+    expect($team->fresh()->widget_settings['yearly_toggle_promo_text'])->toBe('');
 });
 
 it('validates hex color format on team widget defaults', function () {
@@ -156,4 +174,16 @@ it('validates button_text max length on team widget defaults', function () {
             validTeamWidgetSettings(['button_text' => str_repeat('a', 51)]),
         )
         ->assertSessionHasErrors('button_text');
+});
+
+it('validates yearly_toggle_promo_text max length on team widget defaults', function () {
+    $user = User::factory()->create();
+    $team = Team::factory()->create(['owner_id' => $user->id]);
+
+    $this->actingAs($user)
+        ->patch(
+            route('team.settings.widget-defaults.update', ['team' => $team]),
+            validTeamWidgetSettings(['yearly_toggle_promo_text' => str_repeat('a', 51)]),
+        )
+        ->assertSessionHasErrors('yearly_toggle_promo_text');
 });

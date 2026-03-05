@@ -29,6 +29,27 @@ class PublicGymController extends Controller
             'gym' => $gym,
             'plans' => $team->membershipPlans()->active()->ordered()->get(),
             'stripeReady' => $team->hasStripeAccount() || config('stripe.dev_mode'),
+            'widgetDemoUrl' => route('public.widget', [
+                'team' => $team->slug,
+                'gym' => $gym->slug,
+            ]),
+        ]);
+    }
+
+    public function widget(Team $team, string $gymSlug): Response
+    {
+        abort_unless($team->is_active, 404);
+
+        $gym = $team->gyms()->where('slug', $gymSlug)->active()->firstOrFail();
+
+        return Inertia::render('public/widget', [
+            'team' => $team,
+            'gym' => $gym,
+            'widgetScriptUrl' => route('widget.script'),
+            'gymPageUrl' => route('public.gym', [
+                'team' => $team->slug,
+                'gym' => $gym->slug,
+            ]),
         ]);
     }
 }

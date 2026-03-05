@@ -37,6 +37,22 @@ it('shows a gym page with plans', function () {
             ->has('team')
             ->has('gym')
             ->has('plans', 1)
+            ->where('widgetDemoUrl', route('public.widget', ['team' => $team->slug, 'gym' => $gym->slug]))
+        );
+});
+
+it('shows a widget demo page for an active gym', function () {
+    $team = Team::factory()->create(['is_active' => true]);
+    $gym = Gym::factory()->create(['team_id' => $team->id, 'is_active' => true]);
+
+    $this->get(route('public.widget', ['team' => $team, 'gym' => $gym->slug]))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('public/widget')
+            ->has('team')
+            ->has('gym')
+            ->where('widgetScriptUrl', route('widget.script'))
+            ->where('gymPageUrl', route('public.gym', ['team' => $team->slug, 'gym' => $gym->slug]))
         );
 });
 

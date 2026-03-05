@@ -16,11 +16,14 @@ const METHOD_LABELS: Record<string, string> = {
 export default function CheckInHistoryPage({
     team: currentTeam,
     checkIns,
+    gyms,
 }: {
     team: Team;
     checkIns: PaginatedData<CheckIn>;
     gyms: Gym[];
 }) {
+    const hasMultipleGyms = gyms.length > 1;
+
     const breadcrumbs: BreadcrumbItem[] = [
         {
             title: currentTeam.name,
@@ -52,9 +55,11 @@ export default function CheckInHistoryPage({
                                 <th className="px-4 py-3 text-left font-medium">
                                     Plan
                                 </th>
-                                <th className="px-4 py-3 text-left font-medium">
-                                    Gym
-                                </th>
+                                {hasMultipleGyms && (
+                                    <th className="px-4 py-3 text-left font-medium">
+                                        Gym
+                                    </th>
+                                )}
                                 <th className="px-4 py-3 text-left font-medium">
                                     Method
                                 </th>
@@ -70,7 +75,7 @@ export default function CheckInHistoryPage({
                             {checkIns.data.length === 0 ? (
                                 <tr>
                                     <td
-                                        colSpan={6}
+                                        colSpan={hasMultipleGyms ? 6 : 5}
                                         className="px-4 py-8 text-center text-muted-foreground"
                                     >
                                         No check-ins found.
@@ -90,9 +95,11 @@ export default function CheckInHistoryPage({
                                             {checkIn.membership?.plan
                                                 ?.name ?? '-'}
                                         </td>
-                                        <td className="px-4 py-3 text-muted-foreground">
-                                            {checkIn.gym?.name ?? '-'}
-                                        </td>
+                                        {hasMultipleGyms && (
+                                            <td className="px-4 py-3 text-muted-foreground">
+                                                {checkIn.gym?.name ?? '-'}
+                                            </td>
+                                        )}
                                         <td className="px-4 py-3">
                                             <Badge variant="secondary">
                                                 {METHOD_LABELS[

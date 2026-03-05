@@ -11,7 +11,7 @@ class CreateMembershipPlan
     public function __construct(private SyncPlanToStripe $syncPlanToStripe) {}
 
     /**
-     * @param  array{name: string, description?: string|null, price_cents: int, billing_period: string, plan_type?: string, features?: array<string>|null, sort_order?: int}  $data
+     * @param  array{name: string, description?: string|null, price_cents: int, yearly_price_cents?: int|null, billing_period: string, plan_type?: string, features?: array<string>|null, sort_order?: int}  $data
      */
     public function handle(Team $team, array $data): MembershipPlan
     {
@@ -20,6 +20,7 @@ class CreateMembershipPlan
             'name' => $data['name'],
             'description' => $data['description'] ?? null,
             'price_cents' => $data['price_cents'],
+            'yearly_price_cents' => $data['yearly_price_cents'] ?? null,
             'billing_period' => $data['billing_period'],
             'plan_type' => $data['plan_type'] ?? 'recurring',
             'features' => $data['features'] ?? null,

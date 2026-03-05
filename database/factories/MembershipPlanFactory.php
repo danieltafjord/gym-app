@@ -13,12 +13,18 @@ class MembershipPlanFactory extends Factory
 {
     public function definition(): array
     {
+        $billingPeriod = fake()->randomElement(BillingPeriod::cases());
+        $priceCents = fake()->randomElement([2999, 4999, 7999, 9999, 14999]);
+
         return [
             'team_id' => Team::factory(),
             'name' => fake()->randomElement(['Basic', 'Premium', 'VIP', 'Student', 'Family']),
             'description' => fake()->sentence(),
-            'price_cents' => fake()->randomElement([2999, 4999, 7999, 9999, 14999]),
-            'billing_period' => fake()->randomElement(BillingPeriod::cases()),
+            'price_cents' => $priceCents,
+            'yearly_price_cents' => $billingPeriod === BillingPeriod::Monthly && fake()->boolean(40)
+                ? $priceCents * 10
+                : null,
+            'billing_period' => $billingPeriod,
             'features' => ['Access to gym floor', 'Locker room access'],
             'is_active' => true,
             'sort_order' => 0,

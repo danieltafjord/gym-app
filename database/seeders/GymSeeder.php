@@ -11,24 +11,29 @@ class GymSeeder extends Seeder
 {
     public function run(): void
     {
-        $gymNames = [
-            ['Downtown Branch', 'Westside Location', 'Airport Express'],
-            ['Main Campus', 'South Side'],
-            ['Central Studio', 'Harbor View', 'Mountain Retreat'],
+        $gymNamesByTeamSlug = [
+            'fitlife-fitness' => ['Downtown Branch', 'Westside Location', 'Airport Express'],
+            'iron-temple-gym' => ['Main Campus', 'South Side'],
+            'zen-wellness-club' => ['Central Studio', 'Harbor View', 'Mountain Retreat'],
+            'core-fit' => ['Main Studio'],
         ];
 
-        Team::all()->each(function (Team $team, int $index) use ($gymNames) {
-            $names = $gymNames[$index] ?? ['Main Branch'];
+        Team::all()->each(function (Team $team) use ($gymNamesByTeamSlug) {
+            $names = $gymNamesByTeamSlug[$team->slug] ?? ['Main Branch'];
 
             foreach ($names as $name) {
-                Gym::create([
-                    'team_id' => $team->id,
-                    'name' => $name,
-                    'slug' => Str::slug($name),
-                    'address' => fake()->address(),
-                    'phone' => fake()->phoneNumber(),
-                    'email' => fake()->safeEmail(),
-                ]);
+                Gym::query()->firstOrCreate(
+                    [
+                        'team_id' => $team->id,
+                        'slug' => Str::slug($name),
+                    ],
+                    [
+                        'name' => $name,
+                        'address' => fake()->address(),
+                        'phone' => fake()->phoneNumber(),
+                        'email' => fake()->safeEmail(),
+                    ],
+                );
             }
         });
     }

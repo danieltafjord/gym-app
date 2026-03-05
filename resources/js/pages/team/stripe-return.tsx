@@ -18,7 +18,10 @@ export default function StripeReturn({
             title: currentTeam.name,
             href: team.show(currentTeam.slug).url,
         },
-        { title: 'Stripe Setup' },
+        {
+            title: 'Stripe Setup',
+            href: team.stripe.return(currentTeam.slug).url,
+        },
     ];
 
     return (

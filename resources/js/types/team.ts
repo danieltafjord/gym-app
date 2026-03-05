@@ -4,6 +4,8 @@ export type Team = {
     name: string;
     slug: string;
     description: string | null;
+    default_currency: string;
+    default_language: string;
     logo_path: string | null;
     is_active: boolean;
     stripe_account_id: string | null;
@@ -38,6 +40,7 @@ export type WidgetSettings = {
     show_features: boolean;
     show_description: boolean;
     button_text: string;
+    yearly_toggle_promo_text: string;
     columns: number;
     show_access_code: boolean;
     show_success_details: boolean;
@@ -67,6 +70,8 @@ export type MembershipPlan = {
     description: string | null;
     price_cents: number;
     price_formatted: string;
+    yearly_price_cents: number | null;
+    yearly_price_formatted: string | null;
     billing_period: 'weekly' | 'monthly' | 'quarterly' | 'yearly';
     plan_type: 'recurring' | 'one_time';
     features: string[] | null;
@@ -74,6 +79,7 @@ export type MembershipPlan = {
     sort_order: number;
     stripe_product_id: string | null;
     stripe_price_id: string | null;
+    stripe_yearly_price_id: string | null;
     created_at: string;
     updated_at: string;
 };
@@ -101,6 +107,20 @@ export type Membership = {
     };
     team?: Team;
     plan?: MembershipPlan;
+    created_at: string;
+    updated_at: string;
+};
+
+export type MembershipNote = {
+    id: number;
+    membership_id: number;
+    team_id: number;
+    user_id: number;
+    content: string;
+    author?: {
+        id: number;
+        name: string;
+    };
     created_at: string;
     updated_at: string;
 };

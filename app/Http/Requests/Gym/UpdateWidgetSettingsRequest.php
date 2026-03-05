@@ -35,11 +35,19 @@ class UpdateWidgetSettingsRequest extends FormRequest
             'show_features' => ['required', 'boolean'],
             'show_description' => ['required', 'boolean'],
             'button_text' => ['required', 'string', 'max:50'],
+            'yearly_toggle_promo_text' => ['nullable', 'string', 'max:50'],
             'show_access_code' => ['required', 'boolean'],
             'show_success_details' => ['required', 'boolean'],
             'show_cta_card' => ['required', 'boolean'],
             'success_heading' => ['required', 'string', 'max:100'],
             'success_message' => ['required', 'string', 'max:255'],
         ];
+    }
+
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'yearly_toggle_promo_text' => $this->input('yearly_toggle_promo_text') ?? '',
+        ]);
     }
 }

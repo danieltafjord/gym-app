@@ -10,10 +10,20 @@ export type User = {
     [key: string]: unknown;
 };
 
+export type SingleGym = {
+    id: number;
+    name: string;
+    slug: string;
+};
+
 export type ManagedTeam = {
     id: number;
     name: string;
     slug: string;
+};
+
+export type CurrentTeam = ManagedTeam & {
+    singleGym: SingleGym | null;
 };
 
 export type Auth = {

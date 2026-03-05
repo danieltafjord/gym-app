@@ -16,8 +16,21 @@ use Inertia\Response;
 
 class GymController extends Controller
 {
-    public function index(Team $team): Response
+    public function index(Team $team): Response|RedirectResponse
     {
+        $teamGyms = $team->gyms()
+            ->select('id', 'slug')
+            ->orderBy('id')
+            ->limit(2)
+            ->get();
+
+        if ($teamGyms->count() === 1) {
+            return to_route('team.gyms.settings.general', [
+                'team' => $team,
+                'gym' => $teamGyms->first(),
+            ]);
+        }
+
         return Inertia::render('team/gyms/index', [
             'team' => $team,
             'gyms' => $team->gyms()->paginate(15),

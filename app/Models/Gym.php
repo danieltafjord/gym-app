@@ -31,6 +31,7 @@ class Gym extends Model
         'show_features' => true,
         'show_description' => true,
         'button_text' => 'Sign Up',
+        'yearly_toggle_promo_text' => 'Get 1 month free',
         'columns' => 3,
         'show_access_code' => true,
         'show_success_details' => true,

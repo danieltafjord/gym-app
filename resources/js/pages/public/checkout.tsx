@@ -6,7 +6,7 @@ import {
     useStripe,
     useElements,
 } from '@stripe/react-stripe-js';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
     Card,
@@ -31,7 +31,39 @@ interface Props {
     stripeDevMode: boolean;
 }
 
-function PlanSummary({ plan }: { plan: MembershipPlan }) {
+function hasYearlyPricingOption(plan: MembershipPlan): boolean {
+    return plan.plan_type === 'recurring'
+        && plan.billing_period === 'monthly'
+        && plan.yearly_price_cents !== null;
+}
+
+function resolvePriceFormatted(plan: MembershipPlan, billingPeriod: 'monthly' | 'yearly'): string {
+    if (billingPeriod === 'yearly' && hasYearlyPricingOption(plan)) {
+        return plan.yearly_price_formatted ?? plan.price_formatted;
+    }
+
+    return plan.price_formatted;
+}
+
+function resolveBillingLabel(plan: MembershipPlan, billingPeriod: 'monthly' | 'yearly'): string {
+    if (plan.plan_type !== 'recurring') {
+        return ' one-time';
+    }
+
+    if (billingPeriod === 'yearly' && hasYearlyPricingOption(plan)) {
+        return '/year';
+    }
+
+    return `/${plan.billing_period}`;
+}
+
+function PlanSummary({
+    plan,
+    billingPeriod,
+}: {
+    plan: MembershipPlan;
+    billingPeriod: 'monthly' | 'yearly';
+}) {
     return (
         <div className="rounded-lg border p-4">
             <div className="flex items-baseline justify-between">
@@ -45,12 +77,10 @@ function PlanSummary({ plan }: { plan: MembershipPlan }) {
                 </div>
                 <div className="text-right">
                     <span className="text-2xl font-bold">
-                        ${plan.price_formatted}
+                        ${resolvePriceFormatted(plan, billingPeriod)}
                     </span>
                     <span className="text-sm text-muted-foreground">
-                        {plan.plan_type === 'recurring'
-                            ? `/${plan.billing_period}`
-                            : ' one-time'}
+                        {resolveBillingLabel(plan, billingPeriod)}
                     </span>
                 </div>
             </div>
@@ -62,12 +92,16 @@ function PaymentForm({
     team,
     gym,
     plan,
+    billingPeriod,
+    includeBillingPeriod,
     subscriptionId,
     paymentIntentId,
 }: {
     team: Team;
     gym: Gym;
     plan: MembershipPlan;
+    billingPeriod: 'monthly' | 'yearly';
+    includeBillingPeriod: boolean;
     subscriptionId: string | null;
     paymentIntentId: string | null;
 }) {
@@ -100,6 +134,9 @@ function PaymentForm({
         if (paymentIntentId) {
             successUrl.searchParams.set('payment_intent', paymentIntentId);
         }
+        if (includeBillingPeriod) {
+            successUrl.searchParams.set('billing_period', billingPeriod);
+        }
 
         const { error: stripeError } = await stripe.confirmPayment({
             elements,
@@ -116,7 +153,7 @@ function PaymentForm({
 
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
-            <PlanSummary plan={plan} />
+            <PlanSummary plan={plan} billingPeriod={billingPeriod} />
             <PaymentElement />
 
             {error && (
@@ -140,6 +177,8 @@ function DevModePayment({
     team,
     gym,
     plan,
+    billingPeriod,
+    includeBillingPeriod,
     subscriptionId,
     paymentIntentId,
     membershipPlanId,
@@ -147,6 +186,8 @@ function DevModePayment({
     team: Team;
     gym: Gym;
     plan: MembershipPlan;
+    billingPeriod: 'monthly' | 'yearly';
+    includeBillingPeriod: boolean;
     subscriptionId: string | null;
     paymentIntentId: string | null;
     membershipPlanId: number | null;
@@ -176,13 +217,16 @@ function DevModePayment({
                 String(membershipPlanId),
             );
         }
+        if (includeBillingPeriod) {
+            successUrl.searchParams.set('billing_period', billingPeriod);
+        }
 
         window.location.href = successUrl.toString();
     };
 
     return (
         <div className="space-y-4">
-            <PlanSummary plan={plan} />
+            <PlanSummary plan={plan} billingPeriod={billingPeriod} />
 
             <div className="rounded-lg border border-dashed border-amber-500 bg-amber-50 p-4 text-sm text-amber-800 dark:bg-amber-950/20 dark:text-amber-200">
                 <p className="font-medium">Stripe Dev Mode</p>
@@ -210,7 +254,8 @@ export default function Checkout({
     stripeKey,
     stripeDevMode,
 }: Props) {
-    const { auth } = usePage<{ auth: { user: Auth['user'] | null } }>().props;
+    const page = usePage<{ auth: { user: Auth['user'] | null } }>();
+    const { auth } = page.props;
     const [clientSecret, setClientSecret] = useState<string | null>(null);
     const [subscriptionId, setSubscriptionId] = useState<string | null>(null);
     const [paymentIntentId, setPaymentIntentId] = useState<string | null>(null);
@@ -224,6 +269,35 @@ export default function Checkout({
     const [name, setName] = useState(auth.user?.name ?? '');
     const [email, setEmail] = useState(auth.user?.email ?? '');
     const [phone, setPhone] = useState('');
+    const supportsYearlyPricing = hasYearlyPricingOption(plan);
+    const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>(
+        plan.billing_period === 'yearly' ? 'yearly' : 'monthly',
+    );
+
+    useEffect(() => {
+        const queryString = page.url.split('?')[1] ?? '';
+        const queryBillingPeriod = new URLSearchParams(queryString).get('billing_period');
+
+        if (queryBillingPeriod === 'yearly' && (supportsYearlyPricing || plan.billing_period === 'yearly')) {
+            setBillingPeriod('yearly');
+
+            return;
+        }
+
+        if (queryBillingPeriod === 'monthly') {
+            setBillingPeriod('monthly');
+        }
+    }, [page.url, supportsYearlyPricing, plan.billing_period]);
+
+    const checkoutBillingPeriod = plan.plan_type === 'recurring'
+        ? (supportsYearlyPricing
+            ? billingPeriod
+            : plan.billing_period === 'yearly'
+                ? 'yearly'
+                : 'monthly')
+        : 'monthly';
+    const shouldSendBillingPeriod = plan.plan_type === 'recurring'
+        && (supportsYearlyPricing || plan.billing_period === 'yearly');
 
     const stripePromise = useMemo(
         () => (stripeKey ? loadStripe(stripeKey) : null),
@@ -255,7 +329,14 @@ export default function Checkout({
                         ),
                         Accept: 'application/json',
                     },
-                    body: JSON.stringify({ name, email, phone: phone || null }),
+                    body: JSON.stringify({
+                        name,
+                        email,
+                        phone: phone || null,
+                        ...(shouldSendBillingPeriod
+                            ? { billing_period: checkoutBillingPeriod }
+                            : {}),
+                    }),
                 },
             );
 
@@ -281,7 +362,16 @@ export default function Checkout({
         } finally {
             setLoading(false);
         }
-    }, [team, gym, plan, name, email, phone]);
+    }, [
+        team,
+        gym,
+        plan,
+        name,
+        email,
+        phone,
+        shouldSendBillingPeriod,
+        checkoutBillingPeriod,
+    ]);
 
     const isContactValid = name.trim() !== '' && email.trim() !== '';
 
@@ -306,6 +396,8 @@ export default function Checkout({
                                     team={team}
                                     gym={gym}
                                     plan={plan}
+                                    billingPeriod={checkoutBillingPeriod}
+                                    includeBillingPeriod={shouldSendBillingPeriod}
                                     subscriptionId={subscriptionId}
                                     paymentIntentId={paymentIntentId}
                                     membershipPlanId={membershipPlanId}
@@ -319,6 +411,8 @@ export default function Checkout({
                                         team={team}
                                         gym={gym}
                                         plan={plan}
+                                        billingPeriod={checkoutBillingPeriod}
+                                        includeBillingPeriod={shouldSendBillingPeriod}
                                         subscriptionId={subscriptionId}
                                         paymentIntentId={paymentIntentId}
                                     />
@@ -326,7 +420,29 @@ export default function Checkout({
                             )
                         ) : (
                             <div className="space-y-4">
-                                <PlanSummary plan={plan} />
+                                <PlanSummary
+                                    plan={plan}
+                                    billingPeriod={checkoutBillingPeriod}
+                                />
+
+                                {supportsYearlyPricing && (
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <Button
+                                            type="button"
+                                            variant={billingPeriod === 'monthly' ? 'default' : 'outline'}
+                                            onClick={() => setBillingPeriod('monthly')}
+                                        >
+                                            Monthly
+                                        </Button>
+                                        <Button
+                                            type="button"
+                                            variant={billingPeriod === 'yearly' ? 'default' : 'outline'}
+                                            onClick={() => setBillingPeriod('yearly')}
+                                        >
+                                            Yearly
+                                        </Button>
+                                    </div>
+                                )}
 
                                 {stripeDevMode && (
                                     <div className="rounded-lg border border-dashed border-amber-500 bg-amber-50 p-3 text-xs text-amber-800 dark:bg-amber-950/20 dark:text-amber-200">

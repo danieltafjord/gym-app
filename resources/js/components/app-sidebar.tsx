@@ -1,8 +1,9 @@
 import { Link, usePage } from '@inertiajs/react';
 import {
     Building2,
+    Check,
+    ChevronsUpDown,
     ClipboardList,
-    CreditCard,
     Dumbbell,
     History,
     LayoutGrid,
@@ -14,6 +15,12 @@ import {
 } from 'lucide-react';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import {
     Sidebar,
     SidebarContent,
@@ -27,7 +34,7 @@ import {
 } from '@/components/ui/sidebar';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import type { NavItem } from '@/types';
-import AppLogo from './app-logo';
+import AppLogoIcon from './app-logo-icon';
 import { show as teamShow } from '@/routes/team';
 import { index as teamGymsIndex } from '@/routes/team/gyms';
 import { index as teamPlansIndex } from '@/routes/team/plans';
@@ -63,6 +70,15 @@ export function AppSidebar() {
 
     const isSuperAdmin = auth.roles.includes('super-admin');
     const managedTeams = auth.managedTeams ?? [];
+    const hasMultipleTeams = managedTeams.length > 1;
+    const activeTeamName = currentTeam?.name ?? managedTeams[0]?.name ?? 'GymApp';
+    const gymNavigationItem = currentTeam && !currentTeam.singleGym
+        ? {
+              title: 'Gyms',
+              href: teamGymsIndex(currentTeam.slug),
+              icon: Dumbbell,
+          }
+        : null;
 
     const teamNavItems: NavItem[] = currentTeam
         ? [
@@ -71,11 +87,7 @@ export function AppSidebar() {
                   href: teamShow(currentTeam.slug),
                   icon: LayoutGrid,
               },
-              {
-                  title: 'Gyms',
-                  href: teamGymsIndex(currentTeam.slug),
-                  icon: Dumbbell,
-              },
+              ...(gymNavigationItem ? [gymNavigationItem] : []),
               {
                   title: 'Plans',
                   href: teamPlansIndex(currentTeam.slug),
@@ -109,18 +121,57 @@ export function AppSidebar() {
             <SidebarHeader>
                 <SidebarMenu>
                     <SidebarMenuItem>
-                        <SidebarMenuButton size="lg" asChild>
-                            <Link
-                                href={
-                                    currentTeam
-                                        ? teamShow(currentTeam.slug)
-                                        : '/account'
-                                }
-                                prefetch
-                            >
-                                <AppLogo />
-                            </Link>
-                        </SidebarMenuButton>
+                        {hasMultipleTeams ? (
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <SidebarMenuButton
+                                        size="lg"
+                                        className="text-sidebar-accent-foreground data-[state=open]:bg-sidebar-accent"
+                                    >
+                                        <TeamIdentity
+                                            teamName={activeTeamName}
+                                            showSelectorIcon
+                                        />
+                                    </SidebarMenuButton>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent
+                                    className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
+                                    align="start"
+                                    side="bottom"
+                                >
+                                    {managedTeams.map((team) => (
+                                        <DropdownMenuItem key={team.id} asChild>
+                                            <Link
+                                                href={teamShow(team.slug)}
+                                                prefetch
+                                                className="w-full"
+                                            >
+                                                <span className="truncate">
+                                                    {team.name}
+                                                </span>
+                                                {currentTeam?.id ===
+                                                    team.id && (
+                                                    <Check className="ml-auto size-4" />
+                                                )}
+                                            </Link>
+                                        </DropdownMenuItem>
+                                    ))}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        ) : (
+                            <SidebarMenuButton size="lg" asChild>
+                                <Link
+                                    href={
+                                        currentTeam
+                                            ? teamShow(currentTeam.slug)
+                                            : '/account'
+                                    }
+                                    prefetch
+                                >
+                                    <TeamIdentity teamName={activeTeamName} />
+                                </Link>
+                            </SidebarMenuButton>
+                        )}
                     </SidebarMenuItem>
                 </SidebarMenu>
             </SidebarHeader>
@@ -128,33 +179,6 @@ export function AppSidebar() {
             <SidebarContent>
                 {teamNavItems.length > 0 && (
                     <NavMain items={teamNavItems} />
-                )}
-
-                {managedTeams.length > 0 && (
-                    <SidebarGroup className="px-2 py-0">
-                        <SidebarGroupLabel>My Teams</SidebarGroupLabel>
-                        <SidebarMenu>
-                            {managedTeams.map((team) => (
-                                <SidebarMenuItem key={team.id}>
-                                    <SidebarMenuButton
-                                        asChild
-                                        isActive={
-                                            currentTeam?.id === team.id
-                                        }
-                                        tooltip={{ children: team.name }}
-                                    >
-                                        <Link
-                                            href={teamShow(team.slug)}
-                                            prefetch
-                                        >
-                                            <Building2 />
-                                            <span>{team.name}</span>
-                                        </Link>
-                                    </SidebarMenuButton>
-                                </SidebarMenuItem>
-                            ))}
-                        </SidebarMenu>
-                    </SidebarGroup>
                 )}
 
                 {isSuperAdmin && (
@@ -197,5 +221,29 @@ export function AppSidebar() {
                 <NavUser />
             </SidebarFooter>
         </Sidebar>
+    );
+}
+
+function TeamIdentity({
+    teamName,
+    showSelectorIcon = false,
+}: {
+    teamName: string;
+    showSelectorIcon?: boolean;
+}) {
+    return (
+        <>
+            <div className="flex aspect-square size-8 items-center justify-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground">
+                <AppLogoIcon className="size-5 fill-current text-white dark:text-black" />
+            </div>
+            <div className="ml-1 grid flex-1 text-left text-sm">
+                <span className="mb-0.5 flex items-center gap-1 truncate leading-tight font-semibold">
+                    {showSelectorIcon && (
+                        <ChevronsUpDown className="size-3.5 shrink-0" />
+                    )}
+                    <span className="truncate">{teamName}</span>
+                </span>
+            </div>
+        </>
     );
 }

@@ -19,7 +19,17 @@ class WidgetController extends Controller
         $plans = $team->membershipPlans()
             ->active()
             ->ordered()
-            ->get(['id', 'name', 'description', 'price_cents', 'billing_period', 'plan_type', 'features', 'sort_order']);
+            ->get([
+                'id',
+                'name',
+                'description',
+                'price_cents',
+                'yearly_price_cents',
+                'billing_period',
+                'plan_type',
+                'features',
+                'sort_order',
+            ]);
 
         return response()->json([
             'gym' => [
@@ -35,6 +45,8 @@ class WidgetController extends Controller
                 'name' => $plan->name,
                 'description' => $plan->description,
                 'price_formatted' => $plan->price_formatted,
+                'yearly_price_cents' => $plan->yearly_price_cents,
+                'yearly_price_formatted' => $plan->yearly_price_formatted,
                 'billing_period' => $plan->billing_period->value,
                 'plan_type' => $plan->plan_type->value,
                 'features' => $plan->features,

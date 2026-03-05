@@ -1,4 +1,5 @@
 import { Head, useForm } from '@inertiajs/react';
+import { useEffect } from 'react';
 import Heading from '@/components/heading';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -35,6 +36,7 @@ export default function CheckInSettingsPage({
 }) {
     const { data, setData, patch, processing, errors } =
         useForm<CheckInSettings>(settings);
+    const hasMultipleGyms = gyms.length > 1;
 
     const breadcrumbs: BreadcrumbItem[] = [
         {
@@ -43,7 +45,7 @@ export default function CheckInSettingsPage({
         },
         {
             title: 'Settings',
-            href: team.settings.widgetDefaults.url(currentTeam.slug),
+            href: team.settings.general.url(currentTeam.slug),
         },
         {
             title: 'Check-In',
@@ -67,6 +69,12 @@ export default function CheckInSettingsPage({
             setData('allowed_methods', methods);
         }
     }
+
+    useEffect(() => {
+        if (!hasMultipleGyms && data.require_gym_selection) {
+            setData('require_gym_selection', false);
+        }
+    }, [data.require_gym_selection, hasMultipleGyms, setData]);
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -120,21 +128,28 @@ export default function CheckInSettingsPage({
                             )}
                         </fieldset>
 
-                        <div className="flex items-center gap-2">
-                            <Checkbox
-                                id="require_gym_selection"
-                                checked={data.require_gym_selection}
-                                onCheckedChange={(checked) =>
-                                    setData(
-                                        'require_gym_selection',
-                                        checked === true,
-                                    )
-                                }
-                            />
-                            <Label htmlFor="require_gym_selection">
-                                Require gym selection when checking in
-                            </Label>
-                        </div>
+                        {hasMultipleGyms ? (
+                            <div className="flex items-center gap-2">
+                                <Checkbox
+                                    id="require_gym_selection"
+                                    checked={data.require_gym_selection}
+                                    onCheckedChange={(checked) =>
+                                        setData(
+                                            'require_gym_selection',
+                                            checked === true,
+                                        )
+                                    }
+                                />
+                                <Label htmlFor="require_gym_selection">
+                                    Require gym selection when checking in
+                                </Label>
+                            </div>
+                        ) : (
+                            <p className="text-xs text-muted-foreground">
+                                Gym selection is automatically disabled when
+                                your team has one active gym.
+                            </p>
+                        )}
 
                         <div className="grid gap-2">
                             <Label htmlFor="prevent_duplicate_minutes">
@@ -209,8 +224,8 @@ export default function CheckInSettingsPage({
                                 Kiosk URLs
                             </h3>
                             <p className="mb-3 text-xs text-muted-foreground">
-                                Open these links on a tablet or computer at
-                                each gym for self-service check-in.
+                                Open these links on a tablet or computer for
+                                self-service check-in.
                             </p>
                             <div className="space-y-2">
                                 {gyms.map((gym) => (
@@ -218,9 +233,11 @@ export default function CheckInSettingsPage({
                                         key={gym.id}
                                         className="flex items-center gap-3 rounded-md border px-3 py-2"
                                     >
-                                        <span className="text-sm font-medium">
-                                            {gym.name}
-                                        </span>
+                                        {hasMultipleGyms && (
+                                            <span className="text-sm font-medium">
+                                                {gym.name}
+                                            </span>
+                                        )}
                                         <code className="ml-auto text-xs text-muted-foreground">
                                             {window.location.origin}
                                             {kiosk.url({

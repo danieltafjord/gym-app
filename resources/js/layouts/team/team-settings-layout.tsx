@@ -15,6 +15,10 @@ export default function TeamSettingsLayout({
 
     const sidebarNavItems = [
         {
+            title: 'General',
+            href: team.settings.general.url(teamSlug),
+        },
+        {
             title: 'Widget Defaults',
             href: team.settings.widgetDefaults.url(teamSlug),
         },

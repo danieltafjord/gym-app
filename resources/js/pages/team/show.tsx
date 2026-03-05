@@ -1,4 +1,4 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import { Building2, CreditCard, ExternalLink, Users } from 'lucide-react';
 import Heading from '@/components/heading';
 import { Badge } from '@/components/ui/badge';
@@ -15,6 +15,9 @@ export default function ShowTeam({
     team: Team;
     recentMemberships: Membership[];
 }) {
+    const pageCurrentTeam = usePage().props.currentTeam;
+    const singleGym = pageCurrentTeam?.singleGym ?? null;
+
     const breadcrumbs: BreadcrumbItem[] = [
         {
             title: currentTeam.name,
@@ -41,20 +44,22 @@ export default function ShowTeam({
                     </Button>
                 </div>
 
-                <div className="grid gap-4 md:grid-cols-3">
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">
-                                Gyms
-                            </CardTitle>
-                            <Building2 className="size-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">
-                                {currentTeam.gyms_count ?? 0}
-                            </div>
-                        </CardContent>
-                    </Card>
+                <div className={`grid gap-4 ${singleGym ? 'md:grid-cols-2' : 'md:grid-cols-3'}`}>
+                    {!singleGym && (
+                        <Card>
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium">
+                                    Gyms
+                                </CardTitle>
+                                <Building2 className="size-4 text-muted-foreground" />
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-2xl font-bold">
+                                    {currentTeam.gyms_count ?? 0}
+                                </div>
+                            </CardContent>
+                        </Card>
+                    )}
 
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -87,9 +92,18 @@ export default function ShowTeam({
 
                 <div className="grid gap-4 md:grid-cols-3">
                     <Button variant="outline" asChild>
-                        <Link href={team.gyms.index(currentTeam.slug).url}>
+                        <Link
+                            href={
+                                singleGym
+                                    ? team.gyms.settings.general.url({
+                                          team: currentTeam.slug,
+                                          gym: singleGym.slug,
+                                      })
+                                    : team.gyms.index(currentTeam.slug).url
+                            }
+                        >
                             <Building2 className="mr-2 size-4" />
-                            Manage Gyms
+                            {singleGym ? 'Gym Settings' : 'Manage Gyms'}
                         </Link>
                     </Button>
                     <Button variant="outline" asChild>

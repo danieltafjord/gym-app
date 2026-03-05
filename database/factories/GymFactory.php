@@ -51,6 +51,7 @@ class GymFactory extends Factory
                 'padding' => fake()->numberBetween(8, 48),
                 'columns' => fake()->numberBetween(1, 4),
                 'button_text' => 'Join Now',
+                'yearly_toggle_promo_text' => 'Get 1 month free',
                 'show_features' => true,
                 'show_description' => true,
                 'show_access_code' => true,

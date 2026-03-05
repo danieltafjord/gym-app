@@ -57,6 +57,30 @@ it('regenerates the access code after a successful check-in', function () {
         ->toHaveLength(24);
 });
 
+it('assigns the only active gym when none is provided', function () {
+    $team = Team::factory()->create();
+    $gym = Gym::factory()->create(['team_id' => $team->id, 'is_active' => true]);
+    Membership::factory()->create([
+        'team_id' => $team->id,
+        'access_code' => 'SINGLEGYMAUTOASSIGNCHECK',
+        'status' => MembershipStatus::Active,
+    ]);
+
+    $action = new ProcessCheckIn;
+    $result = $action->handle($team, [
+        'access_code' => 'SINGLEGYMAUTOASSIGNCHECK',
+        'gym_id' => null,
+        'method' => CheckInMethod::QrScan->value,
+    ]);
+
+    expect($result['success'])->toBeTrue();
+
+    $this->assertDatabaseHas('check_ins', [
+        'team_id' => $team->id,
+        'gym_id' => $gym->id,
+    ]);
+});
+
 it('rejects an unknown access code', function () {
     $team = Team::factory()->create();
 

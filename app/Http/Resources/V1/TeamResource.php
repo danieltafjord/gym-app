@@ -17,6 +17,8 @@ class TeamResource extends JsonResource
             'name' => $this->name,
             'slug' => $this->slug,
             'description' => $this->description,
+            'default_currency' => $this->default_currency,
+            'default_language' => $this->default_language,
             'logo_path' => $this->logo_path,
             'is_active' => $this->is_active,
             'owner' => $this->whenLoaded('owner', fn () => [

@@ -34,5 +34,33 @@ class CheckInSeeder extends Seeder
                 ]);
             }
         });
+
+        $soloMemberships = Membership::query()
+            ->whereHas('team', static fn ($query) => $query->where('slug', 'core-fit'))
+            ->with('team.gyms')
+            ->get();
+
+        $soloMemberships->each(function (Membership $membership) use ($methods) {
+            $gyms = $membership->team->gyms;
+
+            if ($gyms->isEmpty()) {
+                return;
+            }
+
+            $existingCount = CheckIn::query()
+                ->where('membership_id', $membership->id)
+                ->count();
+
+            for ($i = $existingCount; $i < 12; $i++) {
+                CheckIn::query()->create([
+                    'membership_id' => $membership->id,
+                    'team_id' => $membership->team_id,
+                    'gym_id' => $gyms->random()->id,
+                    'checked_in_by' => $membership->team->owner_id,
+                    'method' => $methods[array_rand($methods)],
+                    'created_at' => now()->subDays(rand(0, 21))->subHours(rand(0, 12)),
+                ]);
+            }
+        });
     }
 }

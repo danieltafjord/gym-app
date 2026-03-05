@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { MembershipPlan, WidgetSettings } from '@/types';
 
 export type PreviewView = 'plans' | 'checkout' | 'success';
@@ -12,6 +13,112 @@ function formatBillingPeriod(period: string): string {
     return labels[period] || '';
 }
 
+function hasYearlyPricingOption(plan: MembershipPlan): boolean {
+    return (
+        plan.plan_type === 'recurring' &&
+        plan.billing_period === 'monthly' &&
+        plan.yearly_price_cents !== null &&
+        plan.yearly_price_cents > 0
+    );
+}
+
+function formatCents(cents: number): string {
+    return (cents / 100).toFixed(2);
+}
+
+function resolveDisplayBillingPeriod(
+    plan: MembershipPlan,
+    preferredBillingPeriod: 'monthly' | 'yearly',
+): MembershipPlan['billing_period'] {
+    if (plan.plan_type !== 'recurring') {
+        return plan.billing_period;
+    }
+
+    if (preferredBillingPeriod === 'yearly' && hasYearlyPricingOption(plan)) {
+        return 'yearly';
+    }
+
+    return plan.billing_period;
+}
+
+function resolveDisplayPriceFormatted(
+    plan: MembershipPlan,
+    displayBillingPeriod: MembershipPlan['billing_period'],
+): string {
+    if (displayBillingPeriod === 'yearly' && hasYearlyPricingOption(plan)) {
+        return (
+            plan.yearly_price_formatted ??
+            formatCents(plan.yearly_price_cents ?? 0)
+        );
+    }
+
+    return plan.price_formatted;
+}
+
+function resolveMonthlyDiscountLabel(
+    plan: MembershipPlan,
+    displayBillingPeriod: MembershipPlan['billing_period'],
+): string | null {
+    if (displayBillingPeriod !== 'yearly' || !hasYearlyPricingOption(plan)) {
+        return null;
+    }
+
+    const monthlyCents = plan.price_cents;
+    const yearlyMonthlyEquivalentCents = Math.round(
+        (plan.yearly_price_cents ?? 0) / 12,
+    );
+    const savingsCents = monthlyCents - yearlyMonthlyEquivalentCents;
+
+    if (savingsCents <= 0) {
+        return null;
+    }
+
+    return `Save $${formatCents(savingsCents)}/month with yearly billing`;
+}
+
+function resolveYearlySavingsMonths(plan: MembershipPlan): number {
+    if (!hasYearlyPricingOption(plan)) {
+        return 0;
+    }
+
+    const monthlyCents = plan.price_cents;
+    if (monthlyCents <= 0) {
+        return 0;
+    }
+
+    const yearlyCents = plan.yearly_price_cents ?? 0;
+    const totalSavingsCents = monthlyCents * 12 - yearlyCents;
+
+    if (totalSavingsCents <= 0) {
+        return 0;
+    }
+
+    return totalSavingsCents / monthlyCents;
+}
+
+function resolveYearlyTogglePromoText(
+    plans: MembershipPlan[],
+    configuredPromoText: string,
+): string | null {
+    const trimmedPromoText = (configuredPromoText ?? '').trim();
+
+    if (trimmedPromoText !== '') {
+        return trimmedPromoText;
+    }
+
+    const bestMonthsFree = plans.reduce((maxMonths, plan) => {
+        return Math.max(maxMonths, resolveYearlySavingsMonths(plan));
+    }, 0);
+
+    if (bestMonthsFree >= 0.95) {
+        const roundedMonths = Math.max(1, Math.round(bestMonthsFree));
+
+        return `Get ${roundedMonths} month${roundedMonths > 1 ? 's' : ''} free`;
+    }
+
+    return null;
+}
+
 function hexToRgba(hex: string, alpha: number): string {
     const r = parseInt(hex.slice(1, 3), 16);
     const g = parseInt(hex.slice(3, 5), 16);
@@ -19,9 +126,142 @@ function hexToRgba(hex: string, alpha: number): string {
     return `rgba(${r},${g},${b},${alpha})`;
 }
 
+function PromoTagIcon() {
+    return (
+        <svg
+            width="12"
+            height="12"
+            viewBox="0 0 12 12"
+            fill="none"
+            aria-hidden="true"
+            style={{ flexShrink: 0 }}
+        >
+            <path
+                d="M6.25 1.5H10.5V5.75L5.75 10.5L1.5 6.25L6.25 1.5Z"
+                stroke="currentColor"
+                strokeWidth="1.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
+            <circle cx="8.5" cy="3.5" r="0.6" fill="currentColor" />
+        </svg>
+    );
+}
+
+function BillingToggle({
+    settings,
+    preferredBillingPeriod,
+    onChange,
+    yearlyPromoText,
+    justifyContent = 'center',
+    marginBottom = '0',
+}: {
+    settings: WidgetSettings;
+    preferredBillingPeriod: 'monthly' | 'yearly';
+    onChange: (period: 'monthly' | 'yearly') => void;
+    yearlyPromoText?: string | null;
+    justifyContent?: React.CSSProperties['justifyContent'];
+    marginBottom?: string;
+}) {
+    return (
+        <div
+            style={{
+                marginBottom,
+                display: 'flex',
+                justifyContent,
+            }}
+        >
+            <div
+                style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    padding: '4px',
+                    borderRadius: '12px',
+                    background: hexToRgba(settings.primary_color, 0.92),
+                    boxShadow: '0 1px 2px rgba(15, 23, 42, 0.08)',
+                }}
+            >
+                {(['monthly', 'yearly'] as const).map((period) => {
+                    const isActive = preferredBillingPeriod === period;
+
+                    return (
+                        <button
+                            key={period}
+                            type="button"
+                            aria-pressed={isActive}
+                            onClick={() => onChange(period)}
+                            style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '8px',
+                                flexWrap:
+                                    period === 'yearly' ? 'wrap' : 'nowrap',
+                                border: 'none',
+                                cursor: 'pointer',
+                                fontFamily: 'inherit',
+                                fontSize: '0.75rem',
+                                fontWeight: 600,
+                                lineHeight: 1,
+                                borderRadius: '8px',
+                                padding: '10px 14px',
+                                color: isActive
+                                    ? settings.text_color
+                                    : hexToRgba(
+                                          settings.button_text_color,
+                                          0.82,
+                                      ),
+                                background: isActive
+                                    ? '#ffffff'
+                                    : 'transparent',
+                                boxShadow: isActive
+                                    ? '0 1px 3px rgba(15, 23, 42, 0.1)'
+                                    : 'none',
+                                textAlign: 'center',
+                            }}
+                        >
+                            <span>
+                                {period === 'monthly' ? 'Monthly' : 'Yearly'}
+                            </span>
+                            {period === 'yearly' && yearlyPromoText && (
+                                <span
+                                    style={{
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '4px',
+                                        fontSize: '0.6875rem',
+                                        fontWeight: 700,
+                                        lineHeight: 1,
+                                        color: isActive
+                                            ? '#db2777'
+                                            : hexToRgba(
+                                                  settings.button_text_color,
+                                                  0.95,
+                                              ),
+                                    }}
+                                >
+                                    <PromoTagIcon />
+                                    {yearlyPromoText}
+                                </span>
+                            )}
+                        </button>
+                    );
+                })}
+            </div>
+        </div>
+    );
+}
+
 function CheckIcon({ color }: { color: string }) {
     return (
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
+        <svg
+            width="16"
+            height="16"
+            viewBox="0 0 16 16"
+            fill="none"
+            style={{ flexShrink: 0 }}
+        >
             <path
                 d="M12 5L6.5 10.5L4 8"
                 stroke={color}
@@ -67,9 +307,15 @@ export default function WidgetPreview({
                 lineHeight: 1.5,
             }}
         >
-            {view === 'plans' && <PlansView settings={settings} plans={plans} />}
-            {view === 'checkout' && <CheckoutView settings={settings} plans={plans} />}
-            {view === 'success' && <SuccessView settings={settings} plans={plans} />}
+            {view === 'plans' && (
+                <PlansView settings={settings} plans={plans} />
+            )}
+            {view === 'checkout' && (
+                <CheckoutView settings={settings} plans={plans} />
+            )}
+            {view === 'success' && (
+                <SuccessView settings={settings} plans={plans} />
+            )}
         </div>
     );
 }
@@ -82,6 +328,14 @@ function PlansView({
     plans: MembershipPlan[];
 }) {
     const gridCols = Math.min(Math.max(settings.columns, 1), 4);
+    const [preferredBillingPeriod, setPreferredBillingPeriod] = useState<
+        'monthly' | 'yearly'
+    >('monthly');
+    const showBillingToggle = plans.some(hasYearlyPricingOption);
+    const yearlyTogglePromoText = resolveYearlyTogglePromoText(
+        plans,
+        settings.yearly_toggle_promo_text,
+    );
 
     if (plans.length === 0) {
         return (
@@ -93,13 +347,23 @@ function PlansView({
                     fontSize: '0.875rem',
                 }}
             >
-                No active plans to preview. Create membership plans to see the widget preview.
+                No active plans to preview. Create membership plans to see the
+                widget preview.
             </p>
         );
     }
 
     return (
         <>
+            {showBillingToggle && (
+                <BillingToggle
+                    settings={settings}
+                    preferredBillingPeriod={preferredBillingPeriod}
+                    onChange={setPreferredBillingPeriod}
+                    yearlyPromoText={yearlyTogglePromoText}
+                    marginBottom="16px"
+                />
+            )}
             <div
                 style={{
                     display: 'grid',
@@ -107,152 +371,194 @@ function PlansView({
                     gap: '20px',
                 }}
             >
-                {plans.map((plan) => (
-                    <div
-                        key={plan.id}
-                        style={{
-                            border: `1px solid ${settings.card_border_color}`,
-                            borderRadius: `${settings.card_border_radius}px`,
-                            padding: '28px',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            background: settings.background_color,
-                            boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.03)',
-                        }}
-                    >
-                        <p
+                {plans.map((plan) => {
+                    const displayBillingPeriod = resolveDisplayBillingPeriod(
+                        plan,
+                        preferredBillingPeriod,
+                    );
+                    const displayPriceFormatted = resolveDisplayPriceFormatted(
+                        plan,
+                        displayBillingPeriod,
+                    );
+                    const discountLabel = resolveMonthlyDiscountLabel(
+                        plan,
+                        displayBillingPeriod,
+                    );
+
+                    return (
+                        <div
+                            key={plan.id}
                             style={{
-                                fontSize: '1.125rem',
-                                fontWeight: 600,
-                                margin: '0 0 6px',
-                                color: settings.text_color,
-                                letterSpacing: '-0.01em',
+                                border: `1px solid ${settings.card_border_color}`,
+                                borderRadius: `${settings.card_border_radius}px`,
+                                padding: '28px',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                background: settings.background_color,
+                                boxShadow:
+                                    '0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.03)',
                             }}
                         >
-                            {plan.name}
-                        </p>
-
-                        {settings.show_description && plan.description && (
                             <p
                                 style={{
-                                    fontSize: '0.8125rem',
-                                    color: settings.secondary_text_color,
-                                    margin: '0 0 20px',
-                                    lineHeight: 1.6,
-                                }}
-                            >
-                                {plan.description}
-                            </p>
-                        )}
-
-                        <div style={{ marginBottom: '20px' }}>
-                            <p
-                                style={{
-                                    display: 'flex',
-                                    alignItems: 'flex-start',
-                                    fontSize: '2.5rem',
-                                    fontWeight: 700,
+                                    fontSize: '1.125rem',
+                                    fontWeight: 600,
+                                    margin: '0 0 6px',
                                     color: settings.text_color,
-                                    margin: 0,
-                                    letterSpacing: '-0.03em',
-                                    lineHeight: 1,
+                                    letterSpacing: '-0.01em',
                                 }}
                             >
-                                <span
+                                {plan.name}
+                            </p>
+
+                            {settings.show_description && plan.description && (
+                                <p
                                     style={{
-                                        fontSize: '1.125rem',
-                                        fontWeight: 600,
-                                        marginTop: '0.35em',
-                                        marginRight: '2px',
-                                        letterSpacing: 0,
+                                        fontSize: '0.8125rem',
+                                        color: settings.secondary_text_color,
+                                        margin: '0 0 20px',
+                                        lineHeight: 1.6,
                                     }}
                                 >
-                                    $
+                                    {plan.description}
+                                </p>
+                            )}
+
+                            <div style={{ marginBottom: '20px' }}>
+                                <p
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'flex-start',
+                                        fontSize: '2.5rem',
+                                        fontWeight: 700,
+                                        color: settings.text_color,
+                                        margin: 0,
+                                        letterSpacing: '-0.03em',
+                                        lineHeight: 1,
+                                    }}
+                                >
+                                    <span
+                                        style={{
+                                            fontSize: '1.125rem',
+                                            fontWeight: 600,
+                                            marginTop: '0.35em',
+                                            marginRight: '2px',
+                                            letterSpacing: 0,
+                                        }}
+                                    >
+                                        $
+                                    </span>
+                                    {displayPriceFormatted}
+                                </p>
+                                <span
+                                    style={{
+                                        display: 'inline-block',
+                                        fontSize: '0.6875rem',
+                                        color: settings.secondary_text_color,
+                                        margin: '8px 0 0',
+                                        padding: '3px 10px',
+                                        background: hexToRgba(
+                                            settings.secondary_text_color,
+                                            0.07,
+                                        ),
+                                        borderRadius: '100px',
+                                        fontWeight: 500,
+                                    }}
+                                >
+                                    {plan.plan_type === 'one_time'
+                                        ? 'One-time payment'
+                                        : formatBillingPeriod(
+                                              displayBillingPeriod,
+                                          )}
                                 </span>
-                                {plan.price_formatted}
-                            </p>
+                                {discountLabel && (
+                                    <p
+                                        style={{
+                                            fontSize: '0.75rem',
+                                            color: settings.primary_color,
+                                            margin: '8px 0 0',
+                                            fontWeight: 600,
+                                        }}
+                                    >
+                                        {discountLabel}
+                                    </p>
+                                )}
+                            </div>
+
+                            {settings.show_features &&
+                                plan.features &&
+                                plan.features.length > 0 && (
+                                    <>
+                                        <div
+                                            style={{
+                                                height: '1px',
+                                                background:
+                                                    settings.card_border_color,
+                                                margin: '0 0 20px',
+                                            }}
+                                        />
+                                        <ul
+                                            style={{
+                                                listStyle: 'none',
+                                                padding: 0,
+                                                margin: '0 0 24px',
+                                                flexGrow: 1,
+                                            }}
+                                        >
+                                            {plan.features.map(
+                                                (feature, index) => (
+                                                    <li
+                                                        key={index}
+                                                        style={{
+                                                            padding: '5px 0',
+                                                            fontSize:
+                                                                '0.8125rem',
+                                                            color: settings.secondary_text_color,
+                                                            display: 'flex',
+                                                            alignItems:
+                                                                'center',
+                                                            gap: '10px',
+                                                        }}
+                                                    >
+                                                        <CheckIcon
+                                                            color={
+                                                                settings.primary_color
+                                                            }
+                                                        />
+                                                        {feature}
+                                                    </li>
+                                                ),
+                                            )}
+                                        </ul>
+                                    </>
+                                )}
+
                             <span
                                 style={{
                                     display: 'inline-block',
-                                    fontSize: '0.6875rem',
-                                    color: settings.secondary_text_color,
-                                    margin: '8px 0 0',
-                                    padding: '3px 10px',
-                                    background: hexToRgba(settings.secondary_text_color, 0.07),
-                                    borderRadius: '100px',
-                                    fontWeight: 500,
+                                    width: '100%',
+                                    padding: '13px 24px',
+                                    background: settings.primary_color,
+                                    color: settings.button_text_color,
+                                    textAlign: 'center',
+                                    textDecoration: 'none',
+                                    fontWeight: 600,
+                                    fontSize: '0.875rem',
+                                    borderRadius: `${settings.button_border_radius}px`,
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    boxSizing: 'border-box',
+                                    marginTop: 'auto',
+                                    boxShadow: `0 1px 3px ${hexToRgba(settings.primary_color, 0.2)}`,
+                                    letterSpacing: '0.01em',
+                                    lineHeight: 1.5,
                                 }}
                             >
-                                {plan.plan_type === 'one_time'
-                                    ? 'One-time payment'
-                                    : formatBillingPeriod(plan.billing_period)}
+                                {settings.button_text || 'Sign Up'}
                             </span>
                         </div>
-
-                        {settings.show_features &&
-                            plan.features &&
-                            plan.features.length > 0 && (
-                                <>
-                                    <div
-                                        style={{
-                                            height: '1px',
-                                            background: settings.card_border_color,
-                                            margin: '0 0 20px',
-                                        }}
-                                    />
-                                    <ul
-                                        style={{
-                                            listStyle: 'none',
-                                            padding: 0,
-                                            margin: '0 0 24px',
-                                            flexGrow: 1,
-                                        }}
-                                    >
-                                        {plan.features.map((feature, index) => (
-                                            <li
-                                                key={index}
-                                                style={{
-                                                    padding: '5px 0',
-                                                    fontSize: '0.8125rem',
-                                                    color: settings.secondary_text_color,
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    gap: '10px',
-                                                }}
-                                            >
-                                                <CheckIcon color={settings.primary_color} />
-                                                {feature}
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </>
-                            )}
-
-                        <span
-                            style={{
-                                display: 'inline-block',
-                                width: '100%',
-                                padding: '13px 24px',
-                                background: settings.primary_color,
-                                color: settings.button_text_color,
-                                textAlign: 'center',
-                                textDecoration: 'none',
-                                fontWeight: 600,
-                                fontSize: '0.875rem',
-                                borderRadius: `${settings.button_border_radius}px`,
-                                border: 'none',
-                                cursor: 'pointer',
-                                boxSizing: 'border-box',
-                                marginTop: 'auto',
-                                boxShadow: `0 1px 3px ${hexToRgba(settings.primary_color, 0.2)}`,
-                                letterSpacing: '0.01em',
-                                lineHeight: 1.5,
-                            }}
-                        >
-                            {settings.button_text || 'Sign Up'}
-                        </span>
-                    </div>
-                ))}
+                    );
+                })}
             </div>
             <p
                 style={{
@@ -278,6 +584,9 @@ function CheckoutView({
     settings: WidgetSettings;
     plans: MembershipPlan[];
 }) {
+    const [preferredBillingPeriod, setPreferredBillingPeriod] = useState<
+        'monthly' | 'yearly'
+    >('monthly');
     const plan = plans[0];
 
     if (!plan) {
@@ -295,8 +604,29 @@ function CheckoutView({
         );
     }
 
+    const supportsYearlyPricing = hasYearlyPricingOption(plan);
+    const yearlyTogglePromoText = supportsYearlyPricing
+        ? resolveYearlyTogglePromoText(
+              [plan],
+              settings.yearly_toggle_promo_text,
+          )
+        : null;
+    const displayBillingPeriod = resolveDisplayBillingPeriod(
+        plan,
+        preferredBillingPeriod,
+    );
+    const displayPriceFormatted = resolveDisplayPriceFormatted(
+        plan,
+        displayBillingPeriod,
+    );
+    const discountLabel = resolveMonthlyDiscountLabel(
+        plan,
+        displayBillingPeriod,
+    );
     const billingLabel =
-        plan.plan_type === 'one_time' ? 'One-time payment' : formatBillingPeriod(plan.billing_period);
+        plan.plan_type === 'one_time'
+            ? 'One-time payment'
+            : formatBillingPeriod(displayBillingPeriod);
 
     const inputStyle: React.CSSProperties = {
         width: '100%',
@@ -358,7 +688,23 @@ function CheckoutView({
                     background: hexToRgba(settings.primary_color, 0.03),
                 }}
             >
-                <p style={{ fontWeight: 600, margin: '0 0 2px', fontSize: '0.9375rem' }}>
+                {supportsYearlyPricing && (
+                    <BillingToggle
+                        settings={settings}
+                        preferredBillingPeriod={preferredBillingPeriod}
+                        onChange={setPreferredBillingPeriod}
+                        yearlyPromoText={yearlyTogglePromoText}
+                        justifyContent="flex-start"
+                        marginBottom="10px"
+                    />
+                )}
+                <p
+                    style={{
+                        fontWeight: 600,
+                        margin: '0 0 2px',
+                        fontSize: '0.9375rem',
+                    }}
+                >
                     {plan.name}
                 </p>
                 <p
@@ -368,21 +714,48 @@ function CheckoutView({
                         margin: 0,
                     }}
                 >
-                    ${plan.price_formatted} {billingLabel}
+                    ${displayPriceFormatted} {billingLabel}
                 </p>
+                {discountLabel && (
+                    <p
+                        style={{
+                            fontSize: '0.75rem',
+                            color: settings.primary_color,
+                            margin: '6px 0 0',
+                            fontWeight: 600,
+                        }}
+                    >
+                        {discountLabel}
+                    </p>
+                )}
             </div>
 
             <div style={{ marginBottom: '18px' }}>
                 <label style={labelStyle}>Full Name *</label>
-                <input style={inputStyle} type="text" placeholder="John Doe" readOnly />
+                <input
+                    style={inputStyle}
+                    type="text"
+                    placeholder="John Doe"
+                    readOnly
+                />
             </div>
             <div style={{ marginBottom: '18px' }}>
                 <label style={labelStyle}>Email *</label>
-                <input style={inputStyle} type="email" placeholder="john@example.com" readOnly />
+                <input
+                    style={inputStyle}
+                    type="email"
+                    placeholder="john@example.com"
+                    readOnly
+                />
             </div>
             <div style={{ marginBottom: '18px' }}>
                 <label style={labelStyle}>Phone (optional)</label>
-                <input style={inputStyle} type="tel" placeholder="+1 (555) 000-0000" readOnly />
+                <input
+                    style={inputStyle}
+                    type="tel"
+                    placeholder="+1 (555) 000-0000"
+                    readOnly
+                />
             </div>
 
             <span
@@ -426,7 +799,14 @@ function SuccessView({
         : 'per month';
 
     return (
-        <div style={{ textAlign: 'center', maxWidth: '440px', margin: '0 auto', padding: '16px 0' }}>
+        <div
+            style={{
+                textAlign: 'center',
+                maxWidth: '440px',
+                margin: '0 auto',
+                padding: '16px 0',
+            }}
+        >
             <div
                 style={{
                     width: '56px',
@@ -451,7 +831,7 @@ function SuccessView({
                     letterSpacing: '-0.01em',
                 }}
             >
-                {settings.success_heading || "You\u2019re all set!"}
+                {settings.success_heading || 'You\u2019re all set!'}
             </h2>
             <p
                 style={{
@@ -508,7 +888,9 @@ function SuccessView({
                     }}
                 >
                     <div style={{ padding: '5px 0' }}>
-                        <dt style={{ fontWeight: 600, display: 'inline' }}>Plan:</dt>
+                        <dt style={{ fontWeight: 600, display: 'inline' }}>
+                            Plan:
+                        </dt>
                         <dd
                             style={{
                                 display: 'inline',
@@ -520,7 +902,9 @@ function SuccessView({
                         </dd>
                     </div>
                     <div style={{ padding: '5px 0' }}>
-                        <dt style={{ fontWeight: 600, display: 'inline' }}>Price:</dt>
+                        <dt style={{ fontWeight: 600, display: 'inline' }}>
+                            Price:
+                        </dt>
                         <dd
                             style={{
                                 display: 'inline',
@@ -532,7 +916,9 @@ function SuccessView({
                         </dd>
                     </div>
                     <div style={{ padding: '5px 0' }}>
-                        <dt style={{ fontWeight: 600, display: 'inline' }}>Starts:</dt>
+                        <dt style={{ fontWeight: 600, display: 'inline' }}>
+                            Starts:
+                        </dt>
                         <dd
                             style={{
                                 display: 'inline',
@@ -586,8 +972,8 @@ function SuccessView({
                             lineHeight: 1.6,
                         }}
                     >
-                        Manage your membership, view billing history, and update your details all in
-                        one place.
+                        Manage your membership, view billing history, and update
+                        your details all in one place.
                     </p>
                     <span
                         style={{

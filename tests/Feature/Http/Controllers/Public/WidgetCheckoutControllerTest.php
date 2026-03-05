@@ -123,6 +123,45 @@ describe('createIntent', function () {
             ]);
     });
 
+    it('creates yearly subscription for recurring plans when yearly period is requested', function () {
+        config(['stripe.dev_mode' => false]);
+
+        $this->recurringPlan->update([
+            'yearly_price_cents' => 49990,
+            'stripe_yearly_price_id' => 'price_test_yearly',
+        ]);
+
+        $mockSubscription = \Stripe\Subscription::constructFrom([
+            'id' => 'sub_test_yearly',
+            'latest_invoice' => [
+                'id' => 'in_test',
+                'payment_intent' => [
+                    'id' => 'pi_test',
+                    'client_secret' => 'pi_secret_test',
+                ],
+            ],
+        ]);
+
+        $stripe = $this->mock(StripeService::class);
+        $stripe->shouldReceive('getOrCreateCustomerForCheckout')
+            ->with(null, 'john@example.com', 'John Doe')
+            ->andReturn('cus_test_123');
+        $stripe->shouldReceive('createSubscription')
+            ->with('cus_test_123', 'price_test_yearly', 'acct_test_123')
+            ->andReturn($mockSubscription);
+
+        $this->postJson(intentUrl($this->team, $this->gym, $this->recurringPlan), [
+            ...$this->contactData,
+            'billing_period' => 'yearly',
+        ])
+            ->assertSuccessful()
+            ->assertJson([
+                'clientSecret' => 'pi_secret_test',
+                'subscriptionId' => 'sub_test_yearly',
+                'billingPeriod' => 'yearly',
+            ]);
+    });
+
     it('creates payment intent for one-time plans via stripe', function () {
         config(['stripe.dev_mode' => false]);
 

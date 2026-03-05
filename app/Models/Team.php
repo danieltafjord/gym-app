@@ -47,6 +47,8 @@ class Team extends Model
         'name',
         'slug',
         'description',
+        'default_currency',
+        'default_language',
         'logo_path',
         'is_active',
         'stripe_account_id',

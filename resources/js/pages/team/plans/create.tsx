@@ -5,13 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem, Team } from '@/types';
 import MembershipPlanController from '@/actions/App/Http/Controllers/Team/MembershipPlanController';
@@ -34,7 +27,9 @@ export default function CreatePlan({ team: currentTeam }: { team: Team }) {
         },
     ];
 
-    const priceCentsRef = useRef<HTMLInputElement>(null);
+    const monthlyPriceCentsRef = useRef<HTMLInputElement>(null);
+    const yearlyPriceCentsRef = useRef<HTMLInputElement>(null);
+    const priceCurrencyCode = currentTeam.default_currency ?? 'USD';
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -50,10 +45,20 @@ export default function CreatePlan({ team: currentTeam }: { team: Team }) {
                     {...MembershipPlanController.store.form(currentTeam.slug)}
                     onSubmit={(e) => {
                         const form = e.currentTarget;
-                        const priceInput = form.querySelector<HTMLInputElement>('[data-price-dollars]');
-                        if (priceInput && priceCentsRef.current) {
-                            const dollars = parseFloat(priceInput.value) || 0;
-                            priceCentsRef.current.value = Math.round(dollars * 100).toString();
+                        const monthlyPriceInput = form.querySelector<HTMLInputElement>('[data-monthly-price-dollars]');
+                        if (monthlyPriceInput && monthlyPriceCentsRef.current) {
+                            const dollars = parseFloat(monthlyPriceInput.value) || 0;
+                            monthlyPriceCentsRef.current.value = Math.round(dollars * 100).toString();
+                        }
+
+                        const yearlyPriceInput = form.querySelector<HTMLInputElement>('[data-yearly-price-dollars]');
+                        if (yearlyPriceInput && yearlyPriceCentsRef.current) {
+                            if (yearlyPriceInput.value.trim() === '') {
+                                yearlyPriceCentsRef.current.value = '';
+                            } else {
+                                const dollars = parseFloat(yearlyPriceInput.value) || 0;
+                                yearlyPriceCentsRef.current.value = Math.round(dollars * 100).toString();
+                            }
                         }
                     }}
                     className="space-y-6"
@@ -87,18 +92,20 @@ export default function CreatePlan({ team: currentTeam }: { team: Team }) {
 
                             <div className="grid gap-4 sm:grid-cols-2">
                                 <div className="grid gap-2">
-                                    <Label htmlFor="price_dollars">Price ($)</Label>
+                                    <Label htmlFor="monthly_price_dollars">
+                                        Monthly Price ({priceCurrencyCode})
+                                    </Label>
                                     <Input
-                                        id="price_dollars"
+                                        id="monthly_price_dollars"
                                         type="number"
                                         step="0.01"
                                         min="0"
                                         required
                                         placeholder="0.00"
-                                        data-price-dollars=""
+                                        data-monthly-price-dollars=""
                                     />
                                     <input
-                                        ref={priceCentsRef}
+                                        ref={monthlyPriceCentsRef}
                                         type="hidden"
                                         name="price_cents"
                                         defaultValue="0"
@@ -107,21 +114,29 @@ export default function CreatePlan({ team: currentTeam }: { team: Team }) {
                                 </div>
 
                                 <div className="grid gap-2">
-                                    <Label htmlFor="billing_period">Billing Period</Label>
-                                    <Select name="billing_period" defaultValue="monthly">
-                                        <SelectTrigger id="billing_period">
-                                            <SelectValue placeholder="Select billing period" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="weekly">Weekly</SelectItem>
-                                            <SelectItem value="monthly">Monthly</SelectItem>
-                                            <SelectItem value="quarterly">Quarterly</SelectItem>
-                                            <SelectItem value="yearly">Yearly</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                    <InputError message={errors.billing_period} />
+                                    <Label htmlFor="yearly_price_dollars">
+                                        Yearly Price ({priceCurrencyCode}){' '}
+                                        <span className="text-muted-foreground">(optional)</span>
+                                    </Label>
+                                    <Input
+                                        id="yearly_price_dollars"
+                                        type="number"
+                                        step="0.01"
+                                        min="0"
+                                        placeholder="0.00"
+                                        data-yearly-price-dollars=""
+                                    />
+                                    <input
+                                        ref={yearlyPriceCentsRef}
+                                        type="hidden"
+                                        name="yearly_price_cents"
+                                        defaultValue=""
+                                    />
+                                    <InputError message={errors.yearly_price_cents} />
                                 </div>
                             </div>
+
+                            <input type="hidden" name="billing_period" value="monthly" />
 
                             <div className="grid gap-2">
                                 <Label htmlFor="features">

@@ -139,11 +139,16 @@ class StripeService
         };
     }
 
-    public function createPrice(MembershipPlan $plan, string $productId, string $connectedAccountId): \Stripe\Price
-    {
+    public function createPrice(
+        MembershipPlan $plan,
+        string $productId,
+        string $connectedAccountId,
+        ?BillingPeriod $billingPeriod = null,
+        ?int $amountCents = null,
+    ): \Stripe\Price {
         $params = [
             'product' => $productId,
-            'unit_amount' => $plan->price_cents,
+            'unit_amount' => $amountCents ?? $plan->price_cents,
             'currency' => config('stripe.currency'),
             'metadata' => [
                 'membership_plan_id' => $plan->id,
@@ -151,7 +156,7 @@ class StripeService
         ];
 
         if ($plan->plan_type === PlanType::Recurring) {
-            $interval = $this->billingPeriodToStripeInterval($plan->billing_period);
+            $interval = $this->billingPeriodToStripeInterval($billingPeriod ?? $plan->billing_period);
             $params['recurring'] = $interval;
         }
 
