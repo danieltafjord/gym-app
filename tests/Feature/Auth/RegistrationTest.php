@@ -20,6 +20,20 @@ test('new users can register', function () {
     $response->assertRedirect('/account');
 });
 
+test('registration respects the intended redirect', function () {
+    $response = $this->withSession([
+        'url.intended' => '/team/demo-gym/checkout/1',
+    ])->post(route('register.store'), [
+        'name' => 'Redirect User',
+        'email' => 'redirect@example.com',
+        'password' => 'password',
+        'password_confirmation' => 'password',
+    ]);
+
+    $this->assertAuthenticated();
+    $response->assertRedirect('/team/demo-gym/checkout/1');
+});
+
 test('it links orphaned memberships on registration', function () {
     $membership = Membership::factory()->guest()->create([
         'email' => 'orphan@example.com',

@@ -1,5 +1,7 @@
 <?php
 
+use App\Enums\AccessCodeStrategy;
+use App\Enums\AccessDurationUnit;
 use App\Enums\BillingPeriod;
 use App\Enums\PlanType;
 use App\Models\Gym;
@@ -72,6 +74,58 @@ it('allows guest checkout without authentication', function () {
         ->assertInertia(fn (Assert $page) => $page
             ->component('public/checkout')
         );
+});
+
+it('redirects guests to login when a plan requires an account', function () {
+    $team = Team::factory()->create([
+        'is_active' => true,
+        'stripe_account_id' => 'acct_test',
+        'stripe_onboarding_complete' => true,
+    ]);
+    $gym = Gym::factory()->create(['team_id' => $team->id, 'is_active' => true]);
+    $plan = MembershipPlan::factory()->create([
+        'team_id' => $team->id,
+        'is_active' => true,
+        'plan_type' => PlanType::OneTime,
+        'requires_account' => true,
+        'access_duration_value' => 24,
+        'access_duration_unit' => AccessDurationUnit::Hour,
+        'access_code_strategy' => AccessCodeStrategy::Static,
+    ]);
+
+    $this->get(route('public.checkout', [
+        'team' => $team,
+        'gym' => $gym->slug,
+        'membershipPlan' => $plan,
+    ]))
+        ->assertRedirect(route('login'));
+});
+
+it('forbids guest intent creation when a plan requires an account', function () {
+    $team = Team::factory()->create([
+        'is_active' => true,
+        'stripe_account_id' => 'acct_test',
+        'stripe_onboarding_complete' => true,
+    ]);
+    $gym = Gym::factory()->create(['team_id' => $team->id, 'is_active' => true]);
+    $plan = MembershipPlan::factory()->create([
+        'team_id' => $team->id,
+        'is_active' => true,
+        'plan_type' => PlanType::OneTime,
+        'requires_account' => true,
+        'access_duration_value' => 24,
+        'access_duration_unit' => AccessDurationUnit::Hour,
+        'access_code_strategy' => AccessCodeStrategy::Static,
+    ]);
+
+    $this->postJson(route('public.checkout.intent', [
+        'team' => $team,
+        'gym' => $gym->slug,
+        'membershipPlan' => $plan,
+    ]), [
+        'name' => 'Guest User',
+        'email' => 'guest@example.com',
+    ])->assertForbidden();
 });
 
 it('creates a subscription intent for recurring plans', function () {

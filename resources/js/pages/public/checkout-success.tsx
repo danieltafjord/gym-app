@@ -2,6 +2,7 @@ import { Head, Link, usePage } from '@inertiajs/react';
 import { CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { resolvePlanAccessSummary } from '@/lib/membership-plans';
 import PublicLayout from '@/layouts/public-layout';
 import type { Gym, Membership, MembershipPlan, Team } from '@/types';
 import type { Auth } from '@/types/auth';
@@ -28,6 +29,7 @@ export default function CheckoutSuccess({
     selectedPriceFormatted,
 }: Props) {
     const { auth } = usePage<{ auth: { user: Auth['user'] | null } }>().props;
+    const accessSummary = resolvePlanAccessSummary(plan);
 
     return (
         <PublicLayout>
@@ -46,9 +48,7 @@ export default function CheckoutSuccess({
                                     <dt className="text-muted-foreground">
                                         Plan
                                     </dt>
-                                    <dd className="font-medium">
-                                        {plan.name}
-                                    </dd>
+                                    <dd className="font-medium">{plan.name}</dd>
                                 </div>
                                 <div className="flex justify-between">
                                     <dt className="text-muted-foreground">
@@ -80,13 +80,33 @@ export default function CheckoutSuccess({
                                         Starts
                                     </dt>
                                     <dd className="font-medium">
-                                        {new Date(
-                                            membership.starts_at,
-                                        ).toLocaleDateString()}
+                                        {membership.starts_at
+                                            ? new Date(
+                                                  membership.starts_at,
+                                              ).toLocaleString()
+                                            : 'On first check-in'}
                                     </dd>
                                 </div>
+                                {membership.ends_at && (
+                                    <div className="flex justify-between">
+                                        <dt className="text-muted-foreground">
+                                            Ends
+                                        </dt>
+                                        <dd className="font-medium">
+                                            {new Date(
+                                                membership.ends_at,
+                                            ).toLocaleString()}
+                                        </dd>
+                                    </div>
+                                )}
                             </dl>
                         </div>
+
+                        {accessSummary && (
+                            <div className="rounded-lg border bg-muted/40 p-4 text-sm text-muted-foreground">
+                                {accessSummary}
+                            </div>
+                        )}
 
                         <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 text-center">
                             <p className="mb-1 text-sm text-muted-foreground">

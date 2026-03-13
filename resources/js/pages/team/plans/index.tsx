@@ -2,8 +2,14 @@ import { Head, Link } from '@inertiajs/react';
 import Heading from '@/components/heading';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { resolvePlanAccessSummary } from '@/lib/membership-plans';
 import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem, MembershipPlan, PaginatedData, Team } from '@/types';
+import type {
+    BreadcrumbItem,
+    MembershipPlan,
+    PaginatedData,
+    Team,
+} from '@/types';
 import team from '@/routes/team';
 
 export default function PlanIndex({
@@ -32,15 +38,24 @@ export default function PlanIndex({
 
             <div className="space-y-6 p-4">
                 <div className="flex items-center justify-between">
-                    <Heading title="Membership Plans" description="Manage your team's membership plans." />
+                    <Heading
+                        title="Membership Plans"
+                        description="Manage your team's membership plans."
+                    />
                     <div className="flex items-center gap-2">
                         <Button variant="outline" asChild>
-                            <Link href={publicPlansUrl} target="_blank" rel="noopener noreferrer">
+                            <Link
+                                href={publicPlansUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
                                 View Public Plans
                             </Link>
                         </Button>
                         <Button asChild>
-                            <Link href={team.plans.create(currentTeam.slug).url}>
+                            <Link
+                                href={team.plans.create(currentTeam.slug).url}
+                            >
                                 Add Plan
                             </Link>
                         </Button>
@@ -51,21 +66,35 @@ export default function PlanIndex({
                     <table className="w-full text-sm">
                         <thead className="border-b bg-muted/50">
                             <tr>
-                                <th className="px-4 py-3 text-left font-medium">Name</th>
-                                <th className="px-4 py-3 text-left font-medium">Monthly Price</th>
-                                <th className="px-4 py-3 text-left font-medium">Yearly Price</th>
-                                <th className="px-4 py-3 text-left font-medium">Status</th>
-                                <th className="px-4 py-3 text-right font-medium">Actions</th>
+                                <th className="px-4 py-3 text-left font-medium">
+                                    Name
+                                </th>
+                                <th className="px-4 py-3 text-left font-medium">
+                                    Type
+                                </th>
+                                <th className="px-4 py-3 text-left font-medium">
+                                    Price
+                                </th>
+                                <th className="px-4 py-3 text-left font-medium">
+                                    Access
+                                </th>
+                                <th className="px-4 py-3 text-left font-medium">
+                                    Status
+                                </th>
+                                <th className="px-4 py-3 text-right font-medium">
+                                    Actions
+                                </th>
                             </tr>
                         </thead>
                         <tbody className="divide-y">
                             {plans.data.length === 0 ? (
                                 <tr>
                                     <td
-                                        colSpan={5}
+                                        colSpan={6}
                                         className="px-4 py-8 text-center text-muted-foreground"
                                     >
-                                        No plans found. Create your first membership plan.
+                                        No plans found. Create your first
+                                        membership plan.
                                     </td>
                                 </tr>
                             ) : (
@@ -75,24 +104,61 @@ export default function PlanIndex({
                                             {plan.name}
                                         </td>
                                         <td className="px-4 py-3">
-                                            {plan.price_formatted}
-                                        </td>
-                                        <td className="px-4 py-3 text-muted-foreground">
-                                            {plan.yearly_price_formatted ?? '—'}
+                                            <Badge variant="outline">
+                                                {plan.plan_type === 'recurring'
+                                                    ? 'Recurring'
+                                                    : 'One-time'}
+                                            </Badge>
                                         </td>
                                         <td className="px-4 py-3">
-                                            <Badge variant={plan.is_active ? 'default' : 'secondary'}>
-                                                {plan.is_active ? 'Active' : 'Inactive'}
+                                            <div className="font-medium">
+                                                ${plan.price_formatted}
+                                            </div>
+                                            {plan.yearly_price_formatted && (
+                                                <div className="text-xs text-muted-foreground">
+                                                    Yearly $
+                                                    {
+                                                        plan.yearly_price_formatted
+                                                    }
+                                                </div>
+                                            )}
+                                        </td>
+                                        <td className="px-4 py-3 text-muted-foreground">
+                                            {resolvePlanAccessSummary(plan) ??
+                                                `Billed ${plan.billing_period}`}
+                                            {plan.requires_account && (
+                                                <div className="text-xs text-primary">
+                                                    Account required
+                                                </div>
+                                            )}
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            <Badge
+                                                variant={
+                                                    plan.is_active
+                                                        ? 'default'
+                                                        : 'secondary'
+                                                }
+                                            >
+                                                {plan.is_active
+                                                    ? 'Active'
+                                                    : 'Inactive'}
                                             </Badge>
                                         </td>
                                         <td className="px-4 py-3">
                                             <div className="flex items-center justify-end">
-                                                <Button variant="ghost" size="sm" asChild>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    asChild
+                                                >
                                                     <Link
-                                                        href={team.plans.edit({
-                                                            team: currentTeam.slug,
-                                                            plan: plan.id,
-                                                        }).url}
+                                                        href={
+                                                            team.plans.edit({
+                                                                team: currentTeam.slug,
+                                                                plan: plan.id,
+                                                            }).url
+                                                        }
                                                     >
                                                         Edit
                                                     </Link>
@@ -119,10 +185,16 @@ export default function PlanIndex({
                                 {link.url ? (
                                     <Link
                                         href={link.url}
-                                        dangerouslySetInnerHTML={{ __html: link.label }}
+                                        dangerouslySetInnerHTML={{
+                                            __html: link.label,
+                                        }}
                                     />
                                 ) : (
-                                    <span dangerouslySetInnerHTML={{ __html: link.label }} />
+                                    <span
+                                        dangerouslySetInnerHTML={{
+                                            __html: link.label,
+                                        }}
+                                    />
                                 )}
                             </Button>
                         ))}

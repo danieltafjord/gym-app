@@ -77,6 +77,40 @@ it('stores a plan when features are provided as comma-separated text', function 
         ->and($plan?->yearly_price_cents)->toBe(49990);
 });
 
+it('stores one-time access settings for day-pass products', function () {
+    $user = User::factory()->create();
+    $team = Team::factory()->create(['owner_id' => $user->id]);
+
+    $response = $this->actingAs($user)
+        ->post(route('team.plans.store', $team), [
+            'name' => '24-Hour Pass',
+            'description' => 'Single-day access',
+            'plan_type' => 'one_time',
+            'price_cents' => 1999,
+            'billing_period' => 'monthly',
+            'access_duration_value' => 24,
+            'access_duration_unit' => 'hour',
+            'activation_mode' => 'purchase',
+            'requires_account' => true,
+            'access_code_strategy' => 'static',
+            'features' => 'Gym floor, Locker room',
+        ]);
+
+    $response->assertRedirect(route('team.plans.index', $team));
+
+    $plan = MembershipPlan::query()
+        ->where('team_id', $team->id)
+        ->where('name', '24-Hour Pass')
+        ->first();
+
+    expect($plan)->not->toBeNull()
+        ->and($plan?->plan_type)->toBe(\App\Enums\PlanType::OneTime)
+        ->and($plan?->access_duration_value)->toBe(24)
+        ->and($plan?->access_duration_unit)->toBe(\App\Enums\AccessDurationUnit::Hour)
+        ->and($plan?->requires_account)->toBeTrue()
+        ->and($plan?->access_code_strategy)->toBe(\App\Enums\AccessCodeStrategy::Static);
+});
+
 it('updates a plan when features are provided as comma-separated text', function () {
     $user = User::factory()->create();
     $team = Team::factory()->create(['owner_id' => $user->id]);
@@ -97,6 +131,78 @@ it('updates a plan when features are provided as comma-separated text', function
         'Fri vekter',
         'Kaffe',
     ]);
+});
+
+it('updates recurring pricing when the edit form submits display prices', function () {
+    $user = User::factory()->create();
+    $team = Team::factory()->create(['owner_id' => $user->id]);
+    $plan = MembershipPlan::factory()->create([
+        'team_id' => $team->id,
+        'billing_period' => \App\Enums\BillingPeriod::Monthly,
+        'price_cents' => 4999,
+        'yearly_price_cents' => 49990,
+    ]);
+
+    $this->actingAs($user)
+        ->from(route('team.plans.edit', ['team' => $team, 'plan' => $plan]))
+        ->patch(route('team.plans.update', [$team, $plan]), [
+            'name' => $plan->name,
+            'description' => $plan->description,
+            'plan_type' => 'recurring',
+            'price' => '59.99',
+            'yearly_price' => '599.90',
+            'billing_period' => 'monthly',
+            'access_code_strategy' => 'rotate_on_check_in',
+            'requires_account' => false,
+            'features' => 'Gym access',
+        ])
+        ->assertRedirect(route('team.plans.edit', ['team' => $team, 'plan' => $plan]))
+        ->assertSessionHasNoErrors();
+
+    $plan->refresh();
+
+    expect($plan->price_cents)->toBe(5999)
+        ->and($plan->yearly_price_cents)->toBe(59990);
+});
+
+it('updates one-time access settings for an existing plan', function () {
+    $user = User::factory()->create();
+    $team = Team::factory()->create(['owner_id' => $user->id]);
+    $plan = MembershipPlan::factory()->create([
+        'team_id' => $team->id,
+    ]);
+
+    $this->actingAs($user)
+        ->from(route('team.plans.edit', ['team' => $team, 'plan' => $plan]))
+        ->patch(route('team.plans.update', [$team, $plan]), [
+            'name' => 'Day Pass',
+            'description' => '24-hour access',
+            'plan_type' => 'one_time',
+            'price_cents' => 1999,
+            'billing_period' => 'monthly',
+            'access_duration_value' => 24,
+            'access_duration_unit' => 'hour',
+            'activation_mode' => 'first_check_in',
+            'requires_account' => true,
+            'access_code_strategy' => 'static',
+            'max_entries' => 3,
+            'features' => 'Gym floor, Showers',
+        ])
+        ->assertRedirect(route('team.plans.edit', ['team' => $team, 'plan' => $plan]))
+        ->assertSessionHasNoErrors();
+
+    $plan->refresh();
+
+    expect($plan->name)->toBe('Day Pass')
+        ->and($plan->plan_type)->toBe(\App\Enums\PlanType::OneTime)
+        ->and($plan->price_cents)->toBe(1999)
+        ->and($plan->access_duration_value)->toBe(24)
+        ->and($plan->access_duration_unit)->toBe(\App\Enums\AccessDurationUnit::Hour)
+        ->and($plan->activation_mode)->toBe(\App\Enums\ActivationMode::FirstCheckIn)
+        ->and($plan->requires_account)->toBeTrue()
+        ->and($plan->access_code_strategy)->toBe(\App\Enums\AccessCodeStrategy::Static)
+        ->and($plan->max_entries)->toBe(3)
+        ->and($plan->features)->toBe(['Gym floor', 'Showers']);
 });
 
 it('stores a plan without syncing to stripe when stripe key is missing', function () {

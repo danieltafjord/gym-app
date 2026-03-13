@@ -1,5 +1,7 @@
 <?php
 
+use App\Enums\AccessCodeStrategy;
+use App\Enums\AccessDurationUnit;
 use App\Enums\BillingPeriod;
 use App\Enums\PlanType;
 use App\Models\Gym;
@@ -226,6 +228,20 @@ describe('createIntent', function () {
             ->assertSuccessful()
             ->assertHeader('Access-Control-Allow-Origin');
     });
+
+    it('rejects widget checkout for plans that require an account', function () {
+        config(['stripe.dev_mode' => true]);
+
+        $this->oneTimePlan->update([
+            'requires_account' => true,
+            'access_duration_value' => 24,
+            'access_duration_unit' => AccessDurationUnit::Hour,
+            'access_code_strategy' => AccessCodeStrategy::Static,
+        ]);
+
+        $this->postJson(intentUrl($this->team, $this->gym, $this->oneTimePlan), $this->contactData)
+            ->assertForbidden();
+    });
 });
 
 // ── confirm Tests ───────────────────────────────────────────────────
@@ -293,6 +309,24 @@ describe('confirm', function () {
         expect($response->json('membership.access_code'))->toBe($existing->access_code);
 
         Mail::assertNothingSent();
+    });
+
+    it('rejects confirm for plans that require an account', function () {
+        config(['stripe.dev_mode' => true]);
+
+        $this->oneTimePlan->update([
+            'requires_account' => true,
+            'access_duration_value' => 24,
+            'access_duration_unit' => AccessDurationUnit::Hour,
+            'access_code_strategy' => AccessCodeStrategy::Static,
+        ]);
+
+        $this->postJson(confirmUrl($this->team, $this->gym), [
+            'payment_intent_id' => 'dev_pi_1_12345',
+            'membership_plan' => $this->oneTimePlan->id,
+            'name' => 'John Doe',
+            'email' => 'john@example.com',
+        ])->assertForbidden();
     });
 
     it('creates membership after stripe subscription verification', function () {

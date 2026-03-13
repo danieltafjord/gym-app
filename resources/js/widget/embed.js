@@ -646,6 +646,50 @@
         );
     }
 
+    function resolvePlanChargeLabel(plan, displayBillingPeriod) {
+        if (plan.plan_type === 'one_time') {
+            return plan.access_duration_label || 'One-time payment';
+        }
+
+        return formatBillingPeriod(displayBillingPeriod);
+    }
+
+    function resolvePlanAccessSummary(plan) {
+        if (plan.plan_type !== 'one_time') {
+            return '';
+        }
+
+        if (
+            plan.activation_mode === 'first_check_in' &&
+            plan.access_duration_label
+        ) {
+            return (
+                'Activates on first check-in and lasts ' +
+                plan.access_duration_label +
+                '.'
+            );
+        }
+
+        if (plan.access_duration_label) {
+            return (
+                'Starts at purchase and lasts ' +
+                plan.access_duration_label +
+                '.'
+            );
+        }
+
+        if (!isNaN(Number(plan.max_entries)) && Number(plan.max_entries) > 0) {
+            return (
+                plan.max_entries +
+                ' ' +
+                (Number(plan.max_entries) === 1 ? 'entry' : 'entries') +
+                '.'
+            );
+        }
+
+        return 'One-time access.';
+    }
+
     function resolveYearlySavingsMonths(plan) {
         if (!hasYearlyPricingOption(plan)) {
             return 0;
@@ -768,14 +812,15 @@
                 plan,
                 displayBillingPeriod,
             );
-            var billingLabel =
-                plan.plan_type === 'one_time'
-                    ? 'One-time payment'
-                    : formatBillingPeriod(displayBillingPeriod);
+            var billingLabel = resolvePlanChargeLabel(
+                plan,
+                displayBillingPeriod,
+            );
             var discountLabel = resolveMonthlyDiscountLabel(
                 plan,
                 displayBillingPeriod,
             );
+            var accessSummary = resolvePlanAccessSummary(plan);
 
             html +=
                 '<div class="gymapp-card" style="animation-delay:' +
@@ -805,6 +850,18 @@
                     '<p class="gymapp-discount">' +
                     escapeHtml(discountLabel) +
                     '</p>';
+            }
+            if (accessSummary) {
+                html +=
+                    '<p class="gymapp-plan-summary-note">' +
+                    escapeHtml(accessSummary) +
+                    '</p>';
+            }
+            if (plan.requires_account) {
+                html +=
+                    '<p class="gymapp-plan-summary-note" style="color:' +
+                    escapeHtml(settings.primary_color) +
+                    ';font-weight:600;">Requires account sign-in</p>';
             }
             html += '</div>';
 
@@ -852,14 +909,12 @@
             plan,
             displayBillingPeriod,
         );
-        var billingLabel =
-            plan.plan_type === 'one_time'
-                ? 'One-time payment'
-                : formatBillingPeriod(displayBillingPeriod);
+        var billingLabel = resolvePlanChargeLabel(plan, displayBillingPeriod);
         var discountLabel = resolveMonthlyDiscountLabel(
             plan,
             displayBillingPeriod,
         );
+        var accessSummary = resolvePlanAccessSummary(plan);
 
         var html = '<div class="gymapp-checkout">';
         html += '<div class="gymapp-checkout-header">';
@@ -884,6 +939,22 @@
                 '<p class="gymapp-plan-summary-note">' +
                 escapeHtml(discountLabel) +
                 '</p>';
+        }
+        if (accessSummary) {
+            html +=
+                '<p class="gymapp-plan-summary-note">' +
+                escapeHtml(accessSummary) +
+                '</p>';
+        }
+        if (plan.requires_account) {
+            html +=
+                '<p class="gymapp-plan-summary-note" style="color:' +
+                escapeHtml(settings.primary_color) +
+                ';font-weight:600;">Sign in or create an account to continue.</p>';
+            html +=
+                '<button class="gymapp-btn" data-account-checkout>Continue to Sign In \u2192</button>';
+            html += '</div>';
+            return html;
         }
         html += '</div>';
 
@@ -945,10 +1016,7 @@
         var m = result.membership;
         var p = result.plan;
 
-        var billingLabel =
-            p.plan_type === 'one_time'
-                ? 'One-time payment'
-                : formatBillingPeriod(p.billing_period);
+        var billingLabel = resolvePlanChargeLabel(p, p.billing_period);
 
         var html = '<div class="gymapp-success">';
         html +=
@@ -1419,6 +1487,25 @@
             callConfirm();
         }
 
+        function handleAccountCheckout() {
+            var checkoutUrl = widgetData.checkout_page_url.replace(
+                '__PLAN_ID__',
+                selectedPlan.id,
+            );
+
+            if (
+                selectedPlan.plan_type === 'recurring' &&
+                (selectedPlanBillingPeriod === 'monthly' ||
+                    selectedPlanBillingPeriod === 'yearly')
+            ) {
+                checkoutUrl +=
+                    '?billing_period=' +
+                    encodeURIComponent(selectedPlanBillingPeriod);
+            }
+
+            window.location.href = checkoutUrl;
+        }
+
         function callConfirm() {
             var body = {
                 membership_plan: selectedPlan.id,
@@ -1479,6 +1566,7 @@
             var backPlansTarget;
             var backCheckoutTarget;
             var submitContactTarget;
+            var accountCheckoutTarget;
             var payNowTarget;
             var simulatePaymentTarget;
 
@@ -1529,6 +1617,13 @@
             if (submitContactTarget) {
                 e.preventDefault();
                 handleSubmitContact();
+                return;
+            }
+
+            accountCheckoutTarget = target.closest('[data-account-checkout]');
+            if (accountCheckoutTarget) {
+                e.preventDefault();
+                handleAccountCheckout();
                 return;
             }
 

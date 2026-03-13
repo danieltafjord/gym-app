@@ -15,7 +15,7 @@ class DashboardController extends Controller
 
         return Inertia::render('account/dashboard', [
             'memberships' => $user->memberships()
-                ->with(['team:id,name,slug', 'plan:id,name,price_cents,billing_period'])
+                ->with(['team:id,name,slug', 'plan:id,name,price_cents,billing_period,plan_type,access_duration_value,access_duration_unit,activation_mode,requires_account,access_code_strategy,max_entries'])
                 ->latest()
                 ->get(),
         ]);

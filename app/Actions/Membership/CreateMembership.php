@@ -2,11 +2,13 @@
 
 namespace App\Actions\Membership;
 
+use App\Enums\ActivationMode;
 use App\Enums\BillingPeriod;
 use App\Enums\MembershipStatus;
 use App\Models\Membership;
 use App\Models\MembershipPlan;
 use App\Models\User;
+use Carbon\CarbonImmutable;
 use DateTimeInterface;
 
 class CreateMembership
@@ -23,7 +25,8 @@ class CreateMembership
         ?string $stripeStatus = null,
         ?BillingPeriod $billingPeriod = null,
     ): Membership {
-        $startsAt = $startsAt ?? now();
+        $startsAt = CarbonImmutable::instance($startsAt ?? now());
+        $activateOnPurchase = $plan->activation_mode !== ActivationMode::FirstCheckIn;
 
         return Membership::create([
             'user_id' => $user?->id,
@@ -34,27 +37,13 @@ class CreateMembership
             'customer_phone' => $customerPhone,
             'access_code' => Membership::generateAccessCode(),
             'status' => MembershipStatus::Active,
-            'starts_at' => $startsAt,
-            'ends_at' => $this->calculateEndDate($plan, $startsAt, $billingPeriod),
+            'starts_at' => $activateOnPurchase ? $startsAt : null,
+            'ends_at' => $activateOnPurchase ? $plan->calculateEndsAt($startsAt, $billingPeriod) : null,
+            'activated_at' => $activateOnPurchase ? $startsAt : null,
+            'entries_used' => 0,
             'stripe_subscription_id' => $stripeSubscriptionId,
             'stripe_payment_intent_id' => $stripePaymentIntentId,
             'stripe_status' => $stripeStatus,
         ]);
-    }
-
-    private function calculateEndDate(
-        MembershipPlan $plan,
-        DateTimeInterface $startsAt,
-        ?BillingPeriod $billingPeriod = null,
-    ): DateTimeInterface {
-        $start = \Carbon\Carbon::instance($startsAt);
-        $effectiveBillingPeriod = $billingPeriod ?? $plan->billing_period;
-
-        return match ($effectiveBillingPeriod) {
-            BillingPeriod::Weekly => $start->copy()->addWeek(),
-            BillingPeriod::Monthly => $start->copy()->addMonth(),
-            BillingPeriod::Quarterly => $start->copy()->addMonths(3),
-            BillingPeriod::Yearly => $start->copy()->addYear(),
-        };
     }
 }

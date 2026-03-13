@@ -76,10 +76,13 @@ class MembershipConfirmationMail extends Mailable
 
     private function defaultBody(): string
     {
+        $startsAt = $this->membership->starts_at?->toDateTimeString() ?? 'Activates on first check-in';
+        $endsAt = $this->membership->ends_at?->toDateTimeString() ?? 'N/A';
+
         return "Hi {$this->membership->customer_name},\n\n"
             ."Thank you for purchasing {$this->membership->plan->name} at {$this->gym->name}.\n\n"
             ."Your access code is: **{$this->membership->access_code}**\n\n"
-            ."Start date: {$this->membership->starts_at->toDateString()}\n"
-            .'End date: '.($this->membership->ends_at?->toDateString() ?? 'N/A');
+            ."Start date: {$startsAt}\n"
+            ."End date: {$endsAt}";
     }
 }

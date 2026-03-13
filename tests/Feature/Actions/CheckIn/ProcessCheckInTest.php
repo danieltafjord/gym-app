@@ -1,13 +1,19 @@
 <?php
 
 use App\Actions\CheckIn\ProcessCheckIn;
+use App\Enums\AccessCodeStrategy;
+use App\Enums\AccessDurationUnit;
+use App\Enums\ActivationMode;
 use App\Enums\CheckInMethod;
 use App\Enums\MembershipStatus;
+use App\Enums\PlanType;
 use App\Models\CheckIn;
 use App\Models\Gym;
 use App\Models\Membership;
+use App\Models\MembershipPlan;
 use App\Models\Team;
 use App\Models\User;
+use Carbon\CarbonImmutable;
 
 it('processes a valid check-in', function () {
     $team = Team::factory()->create();
@@ -215,4 +221,81 @@ it('records staff user id', function () {
     $this->assertDatabaseHas('check_ins', [
         'checked_in_by' => $staff->id,
     ]);
+});
+
+it('activates first-check-in passes and keeps static access codes', function () {
+    CarbonImmutable::setTestNow('2026-03-05 10:00:00');
+
+    $team = Team::factory()->create();
+    $plan = MembershipPlan::factory()->create([
+        'team_id' => $team->id,
+        'plan_type' => PlanType::OneTime,
+        'access_duration_value' => 24,
+        'access_duration_unit' => AccessDurationUnit::Hour,
+        'activation_mode' => ActivationMode::FirstCheckIn,
+        'access_code_strategy' => AccessCodeStrategy::Static,
+    ]);
+    $membership = Membership::factory()->create([
+        'team_id' => $team->id,
+        'membership_plan_id' => $plan->id,
+        'access_code' => 'FIRSTCHECKINPASSCODE0001',
+        'status' => MembershipStatus::Active,
+        'starts_at' => null,
+        'ends_at' => null,
+        'activated_at' => null,
+    ]);
+
+    $action = new ProcessCheckIn;
+    $result = $action->handle($team, [
+        'access_code' => 'FIRSTCHECKINPASSCODE0001',
+        'gym_id' => null,
+        'method' => CheckInMethod::QrScan->value,
+    ]);
+
+    expect($result['success'])->toBeTrue();
+
+    $membership->refresh();
+
+    expect($membership->access_code)->toBe('FIRSTCHECKINPASSCODE0001')
+        ->and($membership->activated_at?->toDateTimeString())->toBe('2026-03-05 10:00:00')
+        ->and($membership->starts_at?->toDateTimeString())->toBe('2026-03-05 10:00:00')
+        ->and($membership->ends_at?->toDateTimeString())->toBe('2026-03-06 10:00:00');
+
+    CarbonImmutable::setTestNow();
+});
+
+it('rejects memberships whose access window has expired even if status is still active', function () {
+    CarbonImmutable::setTestNow('2026-03-06 10:01:00');
+
+    $team = Team::factory()->create();
+    $plan = MembershipPlan::factory()->create([
+        'team_id' => $team->id,
+        'plan_type' => PlanType::OneTime,
+        'access_duration_value' => 24,
+        'access_duration_unit' => AccessDurationUnit::Hour,
+        'activation_mode' => ActivationMode::Purchase,
+    ]);
+    $membership = Membership::factory()->create([
+        'team_id' => $team->id,
+        'membership_plan_id' => $plan->id,
+        'access_code' => 'EXPIREDWINDOWPASSCODE000',
+        'status' => MembershipStatus::Active,
+        'starts_at' => CarbonImmutable::parse('2026-03-05 10:00:00'),
+        'ends_at' => CarbonImmutable::parse('2026-03-06 10:00:00'),
+        'activated_at' => CarbonImmutable::parse('2026-03-05 10:00:00'),
+    ]);
+
+    $action = new ProcessCheckIn;
+    $result = $action->handle($team, [
+        'access_code' => 'EXPIREDWINDOWPASSCODE000',
+        'gym_id' => null,
+        'method' => CheckInMethod::ManualEntry->value,
+    ]);
+
+    expect($result['success'])->toBeFalse()
+        ->and($result['message'])->toContain('expired');
+
+    expect($membership->fresh()->status)->toBe(MembershipStatus::Expired);
+
+    CarbonImmutable::setTestNow();
 });

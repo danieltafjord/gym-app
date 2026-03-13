@@ -237,9 +237,11 @@ export default function UsersShow({ user }: { user: UserDetail }) {
                                                     </Badge>
                                                 </td>
                                                 <td className="px-4 py-3 text-muted-foreground">
-                                                    {new Date(
-                                                        membership.starts_at,
-                                                    ).toLocaleDateString()}
+                                                    {membership.starts_at
+                                                        ? new Date(
+                                                              membership.starts_at,
+                                                          ).toLocaleDateString()
+                                                        : 'Not activated'}
                                                 </td>
                                             </tr>
                                         ))}

@@ -72,6 +72,13 @@ export type MembershipPlan = {
     price_formatted: string;
     yearly_price_cents: number | null;
     yearly_price_formatted: string | null;
+    access_duration_value: number | null;
+    access_duration_unit: 'hour' | 'day' | 'week' | 'month' | 'year' | null;
+    access_duration_label: string | null;
+    activation_mode: 'purchase' | 'first_check_in';
+    requires_account: boolean;
+    access_code_strategy: 'static' | 'rotate_on_check_in';
+    max_entries: number | null;
     billing_period: 'weekly' | 'monthly' | 'quarterly' | 'yearly';
     plan_type: 'recurring' | 'one_time';
     features: string[] | null;
@@ -94,8 +101,11 @@ export type Membership = {
     customer_phone: string | null;
     access_code: string;
     status: 'active' | 'cancelled' | 'expired' | 'paused';
-    starts_at: string;
+    starts_at: string | null;
     ends_at: string | null;
+    activated_at: string | null;
+    entries_used: number;
+    is_currently_valid: boolean;
     cancelled_at: string | null;
     stripe_subscription_id: string | null;
     stripe_payment_intent_id: string | null;

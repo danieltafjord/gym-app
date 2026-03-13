@@ -12,6 +12,7 @@ use App\Models\MembershipPlan;
 use App\Models\Team;
 use App\Services\StripeService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
@@ -19,7 +20,7 @@ use Inertia\Response;
 
 class CheckoutController extends Controller
 {
-    public function show(Team $team, string $gymSlug, MembershipPlan $membershipPlan): Response
+    public function show(Team $team, string $gymSlug, MembershipPlan $membershipPlan): Response|RedirectResponse
     {
         abort_unless($team->is_active, 404);
 
@@ -33,6 +34,10 @@ class CheckoutController extends Controller
 
         abort_unless($membershipPlan->team_id === $team->id, 404);
         abort_unless($membershipPlan->is_active, 404);
+
+        if ($membershipPlan->requires_account && ! request()->user()) {
+            return redirect()->guest(route('login'));
+        }
 
         return Inertia::render('public/checkout', [
             'team' => $team,
@@ -52,6 +57,8 @@ class CheckoutController extends Controller
     ): JsonResponse {
         abort_unless($team->is_active, 404);
         abort_unless($membershipPlan->team_id === $team->id, 404);
+
+        abort_unless(! $membershipPlan->requires_account || $request->user(), 403, 'This product requires an account.');
 
         $devMode = (bool) config('stripe.dev_mode');
 
@@ -141,6 +148,7 @@ class CheckoutController extends Controller
 
         $subscriptionId = $request->query('subscription_id');
         $paymentIntentId = $request->query('payment_intent');
+        $membershipPlanId = $request->query('membership_plan');
         $devMode = (bool) config('stripe.dev_mode');
 
         $plan = null;
@@ -153,7 +161,6 @@ class CheckoutController extends Controller
         );
 
         if ($isDevTransaction) {
-            $membershipPlanId = $request->query('membership_plan');
             $plan = MembershipPlan::where('id', $membershipPlanId)
                 ->where('team_id', $team->id)
                 ->first();
@@ -183,8 +190,13 @@ class CheckoutController extends Controller
 
             $plan = MembershipPlan::query()
                 ->where('team_id', $team->id)
-                ->where('price_cents', $paymentIntent->amount)
-                ->where('plan_type', PlanType::OneTime)
+                ->when(
+                    $membershipPlanId,
+                    fn ($query) => $query->where('id', $membershipPlanId),
+                    fn ($query) => $query
+                        ->where('price_cents', $paymentIntent->amount)
+                        ->where('plan_type', PlanType::OneTime)
+                )
                 ->first();
         }
 

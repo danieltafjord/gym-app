@@ -28,6 +28,7 @@ class WidgetCheckoutController extends Controller
         abort_unless($team->is_active, 404);
         abort_unless($membershipPlan->team_id === $team->id, 404);
         abort_unless($membershipPlan->is_active, 404);
+        abort_unless(! $membershipPlan->requires_account, 403, 'This product requires an account.');
 
         $devMode = (bool) config('stripe.dev_mode');
 
@@ -106,6 +107,7 @@ class WidgetCheckoutController extends Controller
             ->where('id', $request->validated('membership_plan'))
             ->active()
             ->firstOrFail();
+        abort_unless(! $plan->requires_account, 403, 'This product requires an account.');
 
         $subscriptionId = $request->validated('subscription_id');
         $paymentIntentId = $request->validated('payment_intent_id');
@@ -187,14 +189,15 @@ class WidgetCheckoutController extends Controller
             'membership' => [
                 'access_code' => $membership->access_code,
                 'status' => $membership->status->value,
-                'starts_at' => $membership->starts_at?->toDateString(),
-                'ends_at' => $membership->ends_at?->toDateString(),
+                'starts_at' => $membership->starts_at?->toIso8601String(),
+                'ends_at' => $membership->ends_at?->toIso8601String(),
             ],
             'plan' => [
                 'name' => $membership->plan->name,
                 'price_formatted' => $priceFormatted,
                 'billing_period' => $selectedBillingPeriod->value,
                 'plan_type' => $membership->plan->plan_type->value,
+                'access_duration_label' => $membership->plan->access_duration_label,
             ],
             'email' => $membership->email,
         ]);

@@ -15,7 +15,15 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem, CheckIn, Membership, MembershipNote, MembershipPlan, PaginatedData, Team } from '@/types';
+import type {
+    BreadcrumbItem,
+    CheckIn,
+    Membership,
+    MembershipNote,
+    MembershipPlan,
+    PaginatedData,
+    Team,
+} from '@/types';
 import MemberController from '@/actions/App/Http/Controllers/Team/MemberController';
 import MembershipNoteController from '@/actions/App/Http/Controllers/Team/MembershipNoteController';
 import team from '@/routes/team';
@@ -111,39 +119,65 @@ export default function MemberShow({
                     <CardContent>
                         <dl className="grid gap-4 sm:grid-cols-2">
                             <div>
-                                <dt className="text-sm font-medium text-muted-foreground">Plan</dt>
-                                <dd className="mt-1">{membership.plan?.name ?? 'No plan'}</dd>
-                            </div>
-                            <div>
-                                <dt className="text-sm font-medium text-muted-foreground">Status</dt>
-                                <dd className="mt-1 capitalize">{membership.status}</dd>
-                            </div>
-                            <div>
-                                <dt className="text-sm font-medium text-muted-foreground">Start Date</dt>
+                                <dt className="text-sm font-medium text-muted-foreground">
+                                    Plan
+                                </dt>
                                 <dd className="mt-1">
-                                    {new Date(membership.starts_at).toLocaleDateString()}
+                                    {membership.plan?.name ?? 'No plan'}
                                 </dd>
                             </div>
                             <div>
-                                <dt className="text-sm font-medium text-muted-foreground">End Date</dt>
+                                <dt className="text-sm font-medium text-muted-foreground">
+                                    Status
+                                </dt>
+                                <dd className="mt-1 capitalize">
+                                    {membership.status}
+                                </dd>
+                            </div>
+                            <div>
+                                <dt className="text-sm font-medium text-muted-foreground">
+                                    Start Date
+                                </dt>
+                                <dd className="mt-1">
+                                    {membership.starts_at
+                                        ? new Date(
+                                              membership.starts_at,
+                                          ).toLocaleDateString()
+                                        : 'Not activated'}
+                                </dd>
+                            </div>
+                            <div>
+                                <dt className="text-sm font-medium text-muted-foreground">
+                                    End Date
+                                </dt>
                                 <dd className="mt-1">
                                     {membership.ends_at
-                                        ? new Date(membership.ends_at).toLocaleDateString()
+                                        ? new Date(
+                                              membership.ends_at,
+                                          ).toLocaleDateString()
                                         : 'Ongoing'}
                                 </dd>
                             </div>
                             {membership.cancelled_at && (
                                 <div>
-                                    <dt className="text-sm font-medium text-muted-foreground">Cancelled At</dt>
+                                    <dt className="text-sm font-medium text-muted-foreground">
+                                        Cancelled At
+                                    </dt>
                                     <dd className="mt-1">
-                                        {new Date(membership.cancelled_at).toLocaleDateString()}
+                                        {new Date(
+                                            membership.cancelled_at,
+                                        ).toLocaleDateString()}
                                     </dd>
                                 </div>
                             )}
                             <div>
-                                <dt className="text-sm font-medium text-muted-foreground">Member Since</dt>
+                                <dt className="text-sm font-medium text-muted-foreground">
+                                    Member Since
+                                </dt>
                                 <dd className="mt-1">
-                                    {new Date(membership.created_at).toLocaleDateString()}
+                                    {new Date(
+                                        membership.created_at,
+                                    ).toLocaleDateString()}
                                 </dd>
                             </div>
                         </dl>
@@ -168,13 +202,19 @@ export default function MemberShow({
                                 <>
                                     <div className="grid gap-4 sm:grid-cols-2">
                                         <div className="grid gap-2">
-                                            <Label htmlFor="customer_name">Name</Label>
+                                            <Label htmlFor="customer_name">
+                                                Name
+                                            </Label>
                                             <Input
                                                 id="customer_name"
                                                 name="customer_name"
-                                                defaultValue={membership.customer_name}
+                                                defaultValue={
+                                                    membership.customer_name
+                                                }
                                             />
-                                            <InputError message={errors.customer_name} />
+                                            <InputError
+                                                message={errors.customer_name}
+                                            />
                                         </div>
                                         <div className="grid gap-2">
                                             <Label htmlFor="email">Email</Label>
@@ -184,40 +224,64 @@ export default function MemberShow({
                                                 type="email"
                                                 defaultValue={membership.email}
                                             />
-                                            <InputError message={errors.email} />
+                                            <InputError
+                                                message={errors.email}
+                                            />
                                         </div>
                                     </div>
                                     <div className="grid gap-4 sm:grid-cols-2">
                                         <div className="grid gap-2">
-                                            <Label htmlFor="customer_phone">Phone</Label>
+                                            <Label htmlFor="customer_phone">
+                                                Phone
+                                            </Label>
                                             <Input
                                                 id="customer_phone"
                                                 name="customer_phone"
-                                                defaultValue={membership.customer_phone ?? ''}
+                                                defaultValue={
+                                                    membership.customer_phone ??
+                                                    ''
+                                                }
                                             />
-                                            <InputError message={errors.customer_phone} />
+                                            <InputError
+                                                message={errors.customer_phone}
+                                            />
                                         </div>
                                         <div className="grid gap-2">
-                                            <Label htmlFor="membership_plan_id">Plan</Label>
+                                            <Label htmlFor="membership_plan_id">
+                                                Plan
+                                            </Label>
                                             <Select
                                                 name="membership_plan_id"
-                                                defaultValue={String(membership.membership_plan_id)}
+                                                defaultValue={String(
+                                                    membership.membership_plan_id,
+                                                )}
                                             >
                                                 <SelectTrigger id="membership_plan_id">
                                                     <SelectValue placeholder="Select plan" />
                                                 </SelectTrigger>
                                                 <SelectContent>
                                                     {plans.map((plan) => (
-                                                        <SelectItem key={plan.id} value={String(plan.id)}>
+                                                        <SelectItem
+                                                            key={plan.id}
+                                                            value={String(
+                                                                plan.id,
+                                                            )}
+                                                        >
                                                             {plan.name}
                                                         </SelectItem>
                                                     ))}
                                                 </SelectContent>
                                             </Select>
-                                            <InputError message={errors.membership_plan_id} />
+                                            <InputError
+                                                message={
+                                                    errors.membership_plan_id
+                                                }
+                                            />
                                         </div>
                                     </div>
-                                    <Button disabled={processing}>Save Changes</Button>
+                                    <Button disabled={processing}>
+                                        Save Changes
+                                    </Button>
                                 </>
                             )}
                         </Form>
@@ -241,15 +305,26 @@ export default function MemberShow({
                             {({ processing }) => (
                                 <>
                                     <div className="grid flex-1 gap-2">
-                                        <Select name="status" defaultValue={membership.status}>
+                                        <Select
+                                            name="status"
+                                            defaultValue={membership.status}
+                                        >
                                             <SelectTrigger>
                                                 <SelectValue placeholder="Select status" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value="active">Active</SelectItem>
-                                                <SelectItem value="paused">Paused</SelectItem>
-                                                <SelectItem value="cancelled">Cancelled</SelectItem>
-                                                <SelectItem value="expired">Expired</SelectItem>
+                                                <SelectItem value="active">
+                                                    Active
+                                                </SelectItem>
+                                                <SelectItem value="paused">
+                                                    Paused
+                                                </SelectItem>
+                                                <SelectItem value="cancelled">
+                                                    Cancelled
+                                                </SelectItem>
+                                                <SelectItem value="expired">
+                                                    Expired
+                                                </SelectItem>
                                             </SelectContent>
                                         </Select>
                                     </div>
@@ -280,14 +355,18 @@ export default function MemberShow({
                                 <>
                                     <div className="grid gap-4 sm:grid-cols-2">
                                         <div className="grid gap-2">
-                                            <Label htmlFor="ends_at">New End Date</Label>
+                                            <Label htmlFor="ends_at">
+                                                New End Date
+                                            </Label>
                                             <Input
                                                 id="ends_at"
                                                 name="ends_at"
                                                 type="date"
                                                 required
                                             />
-                                            <InputError message={errors.ends_at} />
+                                            <InputError
+                                                message={errors.ends_at}
+                                            />
                                         </div>
                                         {membership.status === 'expired' && (
                                             <div className="flex items-center gap-2 self-center">
@@ -298,11 +377,15 @@ export default function MemberShow({
                                                     value="1"
                                                     className="size-4 rounded border-gray-300"
                                                 />
-                                                <Label htmlFor="reactivate">Reactivate membership</Label>
+                                                <Label htmlFor="reactivate">
+                                                    Reactivate membership
+                                                </Label>
                                             </div>
                                         )}
                                     </div>
-                                    <Button disabled={processing}>Extend</Button>
+                                    <Button disabled={processing}>
+                                        Extend
+                                    </Button>
                                 </>
                             )}
                         </Form>
@@ -316,35 +399,52 @@ export default function MemberShow({
                     </CardHeader>
                     <CardContent>
                         {checkIns.data.length === 0 ? (
-                            <p className="text-sm text-muted-foreground">No check-ins recorded yet.</p>
+                            <p className="text-sm text-muted-foreground">
+                                No check-ins recorded yet.
+                            </p>
                         ) : (
                             <>
                                 <div className="overflow-hidden rounded-lg border">
                                     <table className="w-full text-sm">
                                         <thead className="border-b bg-muted/50">
                                             <tr>
-                                                <th className="px-4 py-2 text-left font-medium">Date/Time</th>
-                                                <th className="px-4 py-2 text-left font-medium">Gym</th>
-                                                <th className="px-4 py-2 text-left font-medium">Method</th>
-                                                <th className="px-4 py-2 text-left font-medium">Staff</th>
+                                                <th className="px-4 py-2 text-left font-medium">
+                                                    Date/Time
+                                                </th>
+                                                <th className="px-4 py-2 text-left font-medium">
+                                                    Gym
+                                                </th>
+                                                <th className="px-4 py-2 text-left font-medium">
+                                                    Method
+                                                </th>
+                                                <th className="px-4 py-2 text-left font-medium">
+                                                    Staff
+                                                </th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y">
                                             {checkIns.data.map((checkIn) => (
                                                 <tr key={checkIn.id}>
                                                     <td className="px-4 py-2">
-                                                        {new Date(checkIn.created_at).toLocaleString()}
+                                                        {new Date(
+                                                            checkIn.created_at,
+                                                        ).toLocaleString()}
                                                     </td>
                                                     <td className="px-4 py-2">
-                                                        {checkIn.gym?.name ?? '-'}
+                                                        {checkIn.gym?.name ??
+                                                            '-'}
                                                     </td>
                                                     <td className="px-4 py-2">
                                                         <Badge variant="secondary">
-                                                            {methodBadge(checkIn.method)}
+                                                            {methodBadge(
+                                                                checkIn.method,
+                                                            )}
                                                         </Badge>
                                                     </td>
                                                     <td className="px-4 py-2">
-                                                        {checkIn.checked_in_by_user?.name ?? '-'}
+                                                        {checkIn
+                                                            .checked_in_by_user
+                                                            ?.name ?? '-'}
                                                     </td>
                                                 </tr>
                                             ))}
@@ -356,7 +456,11 @@ export default function MemberShow({
                                         {checkIns.links.map((link, index) => (
                                             <Button
                                                 key={index}
-                                                variant={link.active ? 'default' : 'outline'}
+                                                variant={
+                                                    link.active
+                                                        ? 'default'
+                                                        : 'outline'
+                                                }
                                                 size="sm"
                                                 disabled={!link.url}
                                                 asChild={!!link.url}
@@ -365,10 +469,16 @@ export default function MemberShow({
                                                     <Link
                                                         href={link.url}
                                                         preserveScroll
-                                                        dangerouslySetInnerHTML={{ __html: link.label }}
+                                                        dangerouslySetInnerHTML={{
+                                                            __html: link.label,
+                                                        }}
                                                     />
                                                 ) : (
-                                                    <span dangerouslySetInnerHTML={{ __html: link.label }} />
+                                                    <span
+                                                        dangerouslySetInnerHTML={{
+                                                            __html: link.label,
+                                                        }}
+                                                    />
                                                 )}
                                             </Button>
                                         ))}
@@ -395,7 +505,8 @@ export default function MemberShow({
                                     }).url,
                                     {
                                         preserveScroll: true,
-                                        onSuccess: () => noteForm.reset('content'),
+                                        onSuccess: () =>
+                                            noteForm.reset('content'),
                                     },
                                 );
                             }}
@@ -404,11 +515,18 @@ export default function MemberShow({
                             <Textarea
                                 placeholder="Add a note..."
                                 value={noteForm.data.content}
-                                onChange={(e) => noteForm.setData('content', e.target.value)}
+                                onChange={(e) =>
+                                    noteForm.setData('content', e.target.value)
+                                }
                                 rows={3}
                             />
                             <InputError message={noteForm.errors.content} />
-                            <Button disabled={noteForm.processing || !noteForm.data.content.trim()}>
+                            <Button
+                                disabled={
+                                    noteForm.processing ||
+                                    !noteForm.data.content.trim()
+                                }
+                            >
                                 Add Note
                             </Button>
                         </form>
@@ -416,12 +534,23 @@ export default function MemberShow({
                         {notes.length > 0 && (
                             <div className="space-y-3 border-t pt-4">
                                 {notes.map((note) => (
-                                    <div key={note.id} className="rounded-lg border p-3">
+                                    <div
+                                        key={note.id}
+                                        className="rounded-lg border p-3"
+                                    >
                                         <div className="flex items-center justify-between text-xs text-muted-foreground">
-                                            <span className="font-medium">{note.author?.name ?? 'Unknown'}</span>
-                                            <span>{new Date(note.created_at).toLocaleString()}</span>
+                                            <span className="font-medium">
+                                                {note.author?.name ?? 'Unknown'}
+                                            </span>
+                                            <span>
+                                                {new Date(
+                                                    note.created_at,
+                                                ).toLocaleString()}
+                                            </span>
                                         </div>
-                                        <p className="mt-1 text-sm whitespace-pre-wrap">{note.content}</p>
+                                        <p className="mt-1 text-sm whitespace-pre-wrap">
+                                            {note.content}
+                                        </p>
                                     </div>
                                 ))}
                             </div>

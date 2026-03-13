@@ -2,6 +2,10 @@
 
 namespace App\Http\Controllers\Public;
 
+use App\Enums\AccessCodeStrategy;
+use App\Enums\ActivationMode;
+use App\Enums\BillingPeriod;
+use App\Enums\PlanType;
 use App\Http\Controllers\Controller;
 use App\Models\Team;
 use Illuminate\Http\JsonResponse;
@@ -27,6 +31,12 @@ class WidgetController extends Controller
                 'yearly_price_cents',
                 'billing_period',
                 'plan_type',
+                'access_duration_value',
+                'access_duration_unit',
+                'activation_mode',
+                'requires_account',
+                'access_code_strategy',
+                'max_entries',
                 'features',
                 'sort_order',
             ]);
@@ -47,13 +57,25 @@ class WidgetController extends Controller
                 'price_formatted' => $plan->price_formatted,
                 'yearly_price_cents' => $plan->yearly_price_cents,
                 'yearly_price_formatted' => $plan->yearly_price_formatted,
-                'billing_period' => $plan->billing_period->value,
-                'plan_type' => $plan->plan_type->value,
+                'billing_period' => ($plan->billing_period ?? BillingPeriod::Monthly)->value,
+                'plan_type' => ($plan->plan_type ?? PlanType::Recurring)->value,
+                'access_duration_value' => $plan->access_duration_value,
+                'access_duration_unit' => $plan->access_duration_unit?->value,
+                'access_duration_label' => $plan->access_duration_label,
+                'activation_mode' => ($plan->activation_mode ?? ActivationMode::Purchase)->value,
+                'requires_account' => (bool) $plan->requires_account,
+                'access_code_strategy' => ($plan->access_code_strategy ?? AccessCodeStrategy::RotateOnCheckIn)->value,
+                'max_entries' => $plan->max_entries,
                 'features' => $plan->features,
             ]),
             'settings' => $gym->widget_settings_with_defaults,
             'stripe_key' => config('stripe.key'),
             'stripe_dev_mode' => (bool) config('stripe.dev_mode'),
+            'checkout_page_url' => route('public.checkout', [
+                'team' => $team->slug,
+                'gym' => $gym->slug,
+                'membershipPlan' => '__PLAN_ID__',
+            ]),
             'checkout_intent_url' => route('widget.checkout.intent', [
                 'team' => $team->slug,
                 'gym' => $gym->slug,

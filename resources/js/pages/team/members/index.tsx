@@ -11,7 +11,13 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem, Membership, MembershipPlan, PaginatedData, Team } from '@/types';
+import type {
+    BreadcrumbItem,
+    Membership,
+    MembershipPlan,
+    PaginatedData,
+    Team,
+} from '@/types';
 import team from '@/routes/team';
 import { useRef } from 'react';
 
@@ -88,17 +94,28 @@ export default function MemberIndex({
 
             <div className="space-y-6 p-4">
                 <div className="flex items-center justify-between">
-                    <Heading title="Members" description="View and manage your team's members." />
+                    <Heading
+                        title="Members"
+                        description="View and manage your team's members."
+                    />
                     <div className="flex items-center gap-2">
                         <Button variant="outline" asChild>
-                            <a href={`${team.members.export(currentTeam.slug).url}?${new URLSearchParams(
-                                Object.fromEntries(Object.entries(filters).filter(([, v]) => v))
-                            ).toString()}`}>
+                            <a
+                                href={`${team.members.export(currentTeam.slug).url}?${new URLSearchParams(
+                                    Object.fromEntries(
+                                        Object.entries(filters).filter(
+                                            ([, v]) => v,
+                                        ),
+                                    ),
+                                ).toString()}`}
+                            >
                                 Export CSV
                             </a>
                         </Button>
                         <Button asChild>
-                            <Link href={team.members.create(currentTeam.slug).url}>
+                            <Link
+                                href={team.members.create(currentTeam.slug).url}
+                            >
                                 Add Member
                             </Link>
                         </Button>
@@ -114,7 +131,11 @@ export default function MemberIndex({
                     />
                     <Select
                         value={filters.status || 'all'}
-                        onValueChange={(value) => applyFilters({ status: value === 'all' ? '' : value })}
+                        onValueChange={(value) =>
+                            applyFilters({
+                                status: value === 'all' ? '' : value,
+                            })
+                        }
                     >
                         <SelectTrigger className="w-40">
                             <SelectValue placeholder="All statuses" />
@@ -129,7 +150,9 @@ export default function MemberIndex({
                     </Select>
                     <Select
                         value={filters.plan || 'all'}
-                        onValueChange={(value) => applyFilters({ plan: value === 'all' ? '' : value })}
+                        onValueChange={(value) =>
+                            applyFilters({ plan: value === 'all' ? '' : value })
+                        }
                     >
                         <SelectTrigger className="w-48">
                             <SelectValue placeholder="All plans" />
@@ -137,7 +160,10 @@ export default function MemberIndex({
                         <SelectContent>
                             <SelectItem value="all">All plans</SelectItem>
                             {plans.map((plan) => (
-                                <SelectItem key={plan.id} value={String(plan.id)}>
+                                <SelectItem
+                                    key={plan.id}
+                                    value={String(plan.id)}
+                                >
                                     {plan.name}
                                 </SelectItem>
                             ))}
@@ -149,12 +175,24 @@ export default function MemberIndex({
                     <table className="w-full text-sm">
                         <thead className="border-b bg-muted/50">
                             <tr>
-                                <th className="px-4 py-3 text-left font-medium">Name</th>
-                                <th className="px-4 py-3 text-left font-medium">Email</th>
-                                <th className="px-4 py-3 text-left font-medium">Plan</th>
-                                <th className="px-4 py-3 text-left font-medium">Status</th>
-                                <th className="px-4 py-3 text-left font-medium">Joined</th>
-                                <th className="px-4 py-3 text-right font-medium">Actions</th>
+                                <th className="px-4 py-3 text-left font-medium">
+                                    Name
+                                </th>
+                                <th className="px-4 py-3 text-left font-medium">
+                                    Email
+                                </th>
+                                <th className="px-4 py-3 text-left font-medium">
+                                    Plan
+                                </th>
+                                <th className="px-4 py-3 text-left font-medium">
+                                    Status
+                                </th>
+                                <th className="px-4 py-3 text-left font-medium">
+                                    Joined
+                                </th>
+                                <th className="px-4 py-3 text-right font-medium">
+                                    Actions
+                                </th>
                             </tr>
                         </thead>
                         <tbody className="divide-y">
@@ -180,20 +218,35 @@ export default function MemberIndex({
                                             {membership.plan?.name ?? '-'}
                                         </td>
                                         <td className="px-4 py-3">
-                                            <Badge variant={statusVariant(membership.status)}>
+                                            <Badge
+                                                variant={statusVariant(
+                                                    membership.status,
+                                                )}
+                                            >
                                                 {membership.status}
                                             </Badge>
                                         </td>
                                         <td className="px-4 py-3 text-muted-foreground">
-                                            {new Date(membership.starts_at).toLocaleDateString()}
+                                            {membership.starts_at
+                                                ? new Date(
+                                                      membership.starts_at,
+                                                  ).toLocaleDateString()
+                                                : 'Not activated'}
                                         </td>
                                         <td className="px-4 py-3 text-right">
-                                            <Button variant="ghost" size="sm" asChild>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                asChild
+                                            >
                                                 <Link
-                                                    href={team.members.show({
-                                                        team: currentTeam.slug,
-                                                        membership: membership.id,
-                                                    }).url}
+                                                    href={
+                                                        team.members.show({
+                                                            team: currentTeam.slug,
+                                                            membership:
+                                                                membership.id,
+                                                        }).url
+                                                    }
                                                 >
                                                     View
                                                 </Link>
@@ -219,10 +272,16 @@ export default function MemberIndex({
                                 {link.url ? (
                                     <Link
                                         href={link.url}
-                                        dangerouslySetInnerHTML={{ __html: link.label }}
+                                        dangerouslySetInnerHTML={{
+                                            __html: link.label,
+                                        }}
                                     />
                                 ) : (
-                                    <span dangerouslySetInnerHTML={{ __html: link.label }} />
+                                    <span
+                                        dangerouslySetInnerHTML={{
+                                            __html: link.label,
+                                        }}
+                                    />
                                 )}
                             </Button>
                         ))}

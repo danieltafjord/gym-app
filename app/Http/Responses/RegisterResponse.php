@@ -13,6 +13,6 @@ class RegisterResponse implements RegisterResponseContract
             return response()->json(['message' => 'Registration successful.']);
         }
 
-        return redirect('/account');
+        return redirect()->intended('/account');
     }
 }

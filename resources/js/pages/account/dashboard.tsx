@@ -2,10 +2,8 @@ import { Head } from '@inertiajs/react';
 import { QRCodeSVG } from 'qrcode.react';
 import Heading from '@/components/heading';
 import { Badge } from '@/components/ui/badge';
-import {
-    Card,
-    CardContent,
-} from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
+import { resolvePlanAccessSummary } from '@/lib/membership-plans';
 import AccountLayout from '@/layouts/account-layout';
 import type { Membership } from '@/types';
 
@@ -13,12 +11,20 @@ interface Props {
     memberships: Membership[];
 }
 
+function formatDateTime(value: string | null): string | null {
+    if (!value) {
+        return null;
+    }
+
+    return new Date(value).toLocaleString();
+}
+
 export default function AccountDashboard({ memberships }: Props) {
     const activeMemberships = memberships.filter(
-        (m) => m.status === 'active',
+        (membership) => membership.is_currently_valid,
     );
     const otherMemberships = memberships.filter(
-        (m) => m.status !== 'active',
+        (membership) => !membership.is_currently_valid,
     );
 
     return (
@@ -46,6 +52,21 @@ export default function AccountDashboard({ memberships }: Props) {
                                         <p className="text-sm text-muted-foreground">
                                             {membership.plan?.name}
                                         </p>
+                                        {membership.plan && (
+                                            <p className="mt-1 text-xs text-muted-foreground">
+                                                {resolvePlanAccessSummary(
+                                                    membership.plan,
+                                                )}
+                                            </p>
+                                        )}
+                                        {membership.ends_at && (
+                                            <p className="mt-1 text-xs text-muted-foreground">
+                                                Expires{' '}
+                                                {formatDateTime(
+                                                    membership.ends_at,
+                                                )}
+                                            </p>
+                                        )}
                                     </div>
                                     <Badge variant="secondary">
                                         {membership.status}
@@ -86,6 +107,21 @@ export default function AccountDashboard({ memberships }: Props) {
                                         <p className="text-sm text-muted-foreground">
                                             {membership.plan?.name}
                                         </p>
+                                        {membership.starts_at === null &&
+                                            membership.plan?.activation_mode ===
+                                                'first_check_in' && (
+                                                <p className="mt-1 text-xs text-muted-foreground">
+                                                    Activates on first check-in
+                                                </p>
+                                            )}
+                                        {membership.ends_at && (
+                                            <p className="mt-1 text-xs text-muted-foreground">
+                                                Ended{' '}
+                                                {formatDateTime(
+                                                    membership.ends_at,
+                                                )}
+                                            </p>
+                                        )}
                                     </div>
                                     <Badge variant="outline">
                                         {membership.status}

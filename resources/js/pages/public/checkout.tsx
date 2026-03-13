@@ -1,5 +1,5 @@
 import { Head, usePage } from '@inertiajs/react';
-import { loadStripe, type Stripe } from '@stripe/stripe-js';
+import { loadStripe } from '@stripe/stripe-js';
 import {
     Elements,
     PaymentElement,
@@ -17,6 +17,12 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+    hasYearlyPricingOption,
+    resolveDisplayPriceFormatted,
+    resolvePlanAccessSummary,
+    resolvePlanChargeLabel,
+} from '@/lib/membership-plans';
 import PublicLayout from '@/layouts/public-layout';
 import type { Gym, MembershipPlan, Team } from '@/types';
 import type { Auth } from '@/types/auth';
@@ -31,32 +37,6 @@ interface Props {
     stripeDevMode: boolean;
 }
 
-function hasYearlyPricingOption(plan: MembershipPlan): boolean {
-    return plan.plan_type === 'recurring'
-        && plan.billing_period === 'monthly'
-        && plan.yearly_price_cents !== null;
-}
-
-function resolvePriceFormatted(plan: MembershipPlan, billingPeriod: 'monthly' | 'yearly'): string {
-    if (billingPeriod === 'yearly' && hasYearlyPricingOption(plan)) {
-        return plan.yearly_price_formatted ?? plan.price_formatted;
-    }
-
-    return plan.price_formatted;
-}
-
-function resolveBillingLabel(plan: MembershipPlan, billingPeriod: 'monthly' | 'yearly'): string {
-    if (plan.plan_type !== 'recurring') {
-        return ' one-time';
-    }
-
-    if (billingPeriod === 'yearly' && hasYearlyPricingOption(plan)) {
-        return '/year';
-    }
-
-    return `/${plan.billing_period}`;
-}
-
 function PlanSummary({
     plan,
     billingPeriod,
@@ -64,6 +44,14 @@ function PlanSummary({
     plan: MembershipPlan;
     billingPeriod: 'monthly' | 'yearly';
 }) {
+    const displayBillingPeriod =
+        plan.plan_type === 'recurring'
+            ? billingPeriod === 'yearly' && hasYearlyPricingOption(plan)
+                ? 'yearly'
+                : plan.billing_period
+            : plan.billing_period;
+    const accessSummary = resolvePlanAccessSummary(plan);
+
     return (
         <div className="rounded-lg border p-4">
             <div className="flex items-baseline justify-between">
@@ -77,13 +65,25 @@ function PlanSummary({
                 </div>
                 <div className="text-right">
                     <span className="text-2xl font-bold">
-                        ${resolvePriceFormatted(plan, billingPeriod)}
+                        $
+                        {resolveDisplayPriceFormatted(
+                            plan,
+                            displayBillingPeriod,
+                        )}
                     </span>
                     <span className="text-sm text-muted-foreground">
-                        {resolveBillingLabel(plan, billingPeriod)}
+                        {resolvePlanChargeLabel(plan, displayBillingPeriod)}
                     </span>
                 </div>
             </div>
+            {(accessSummary || plan.requires_account) && (
+                <div className="mt-3 space-y-1 text-sm text-muted-foreground">
+                    {accessSummary && <p>{accessSummary}</p>}
+                    {plan.requires_account && (
+                        <p>This purchase will be linked to your account.</p>
+                    )}
+                </div>
+            )}
         </div>
     );
 }
@@ -134,6 +134,7 @@ function PaymentForm({
         if (paymentIntentId) {
             successUrl.searchParams.set('payment_intent', paymentIntentId);
         }
+        successUrl.searchParams.set('membership_plan', String(plan.id));
         if (includeBillingPeriod) {
             successUrl.searchParams.set('billing_period', billingPeriod);
         }
@@ -276,9 +277,14 @@ export default function Checkout({
 
     useEffect(() => {
         const queryString = page.url.split('?')[1] ?? '';
-        const queryBillingPeriod = new URLSearchParams(queryString).get('billing_period');
+        const queryBillingPeriod = new URLSearchParams(queryString).get(
+            'billing_period',
+        );
 
-        if (queryBillingPeriod === 'yearly' && (supportsYearlyPricing || plan.billing_period === 'yearly')) {
+        if (
+            queryBillingPeriod === 'yearly' &&
+            (supportsYearlyPricing || plan.billing_period === 'yearly')
+        ) {
             setBillingPeriod('yearly');
 
             return;
@@ -289,15 +295,17 @@ export default function Checkout({
         }
     }, [page.url, supportsYearlyPricing, plan.billing_period]);
 
-    const checkoutBillingPeriod = plan.plan_type === 'recurring'
-        ? (supportsYearlyPricing
-            ? billingPeriod
-            : plan.billing_period === 'yearly'
-                ? 'yearly'
-                : 'monthly')
-        : 'monthly';
-    const shouldSendBillingPeriod = plan.plan_type === 'recurring'
-        && (supportsYearlyPricing || plan.billing_period === 'yearly');
+    const checkoutBillingPeriod =
+        plan.plan_type === 'recurring'
+            ? supportsYearlyPricing
+                ? billingPeriod
+                : plan.billing_period === 'yearly'
+                  ? 'yearly'
+                  : 'monthly'
+            : 'monthly';
+    const shouldSendBillingPeriod =
+        plan.plan_type === 'recurring' &&
+        (supportsYearlyPricing || plan.billing_period === 'yearly');
 
     const stripePromise = useMemo(
         () => (stripeKey ? loadStripe(stripeKey) : null),
@@ -322,9 +330,7 @@ export default function Checkout({
                         'X-XSRF-TOKEN': decodeURIComponent(
                             document.cookie
                                 .split('; ')
-                                .find((row) =>
-                                    row.startsWith('XSRF-TOKEN='),
-                                )
+                                .find((row) => row.startsWith('XSRF-TOKEN='))
                                 ?.split('=')[1] ?? '',
                         ),
                         Accept: 'application/json',
@@ -356,9 +362,7 @@ export default function Checkout({
             setIsDevMode(data.devMode ?? false);
             setMembershipPlanId(data.membershipPlanId ?? null);
         } catch (e) {
-            setError(
-                e instanceof Error ? e.message : 'Something went wrong',
-            );
+            setError(e instanceof Error ? e.message : 'Something went wrong');
         } finally {
             setLoading(false);
         }
@@ -397,7 +401,9 @@ export default function Checkout({
                                     gym={gym}
                                     plan={plan}
                                     billingPeriod={checkoutBillingPeriod}
-                                    includeBillingPeriod={shouldSendBillingPeriod}
+                                    includeBillingPeriod={
+                                        shouldSendBillingPeriod
+                                    }
                                     subscriptionId={subscriptionId}
                                     paymentIntentId={paymentIntentId}
                                     membershipPlanId={membershipPlanId}
@@ -412,7 +418,9 @@ export default function Checkout({
                                         gym={gym}
                                         plan={plan}
                                         billingPeriod={checkoutBillingPeriod}
-                                        includeBillingPeriod={shouldSendBillingPeriod}
+                                        includeBillingPeriod={
+                                            shouldSendBillingPeriod
+                                        }
                                         subscriptionId={subscriptionId}
                                         paymentIntentId={paymentIntentId}
                                     />
@@ -429,15 +437,27 @@ export default function Checkout({
                                     <div className="grid grid-cols-2 gap-2">
                                         <Button
                                             type="button"
-                                            variant={billingPeriod === 'monthly' ? 'default' : 'outline'}
-                                            onClick={() => setBillingPeriod('monthly')}
+                                            variant={
+                                                billingPeriod === 'monthly'
+                                                    ? 'default'
+                                                    : 'outline'
+                                            }
+                                            onClick={() =>
+                                                setBillingPeriod('monthly')
+                                            }
                                         >
                                             Monthly
                                         </Button>
                                         <Button
                                             type="button"
-                                            variant={billingPeriod === 'yearly' ? 'default' : 'outline'}
-                                            onClick={() => setBillingPeriod('yearly')}
+                                            variant={
+                                                billingPeriod === 'yearly'
+                                                    ? 'default'
+                                                    : 'outline'
+                                            }
+                                            onClick={() =>
+                                                setBillingPeriod('yearly')
+                                            }
                                         >
                                             Yearly
                                         </Button>

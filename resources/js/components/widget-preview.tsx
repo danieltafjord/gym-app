@@ -1,4 +1,8 @@
 import { useState } from 'react';
+import {
+    resolvePlanAccessSummary,
+    resolvePlanChargeLabel,
+} from '@/lib/membership-plans';
 import type { MembershipPlan, WidgetSettings } from '@/types';
 
 export type PreviewView = 'plans' | 'checkout' | 'success';
@@ -384,6 +388,7 @@ function PlansView({
                         plan,
                         displayBillingPeriod,
                     );
+                    const accessSummary = resolvePlanAccessSummary(plan);
 
                     return (
                         <div
@@ -465,11 +470,10 @@ function PlansView({
                                         fontWeight: 500,
                                     }}
                                 >
-                                    {plan.plan_type === 'one_time'
-                                        ? 'One-time payment'
-                                        : formatBillingPeriod(
-                                              displayBillingPeriod,
-                                          )}
+                                    {resolvePlanChargeLabel(
+                                        plan,
+                                        displayBillingPeriod,
+                                    )}
                                 </span>
                                 {discountLabel && (
                                     <p
@@ -481,6 +485,30 @@ function PlansView({
                                         }}
                                     >
                                         {discountLabel}
+                                    </p>
+                                )}
+                                {accessSummary && (
+                                    <p
+                                        style={{
+                                            fontSize: '0.75rem',
+                                            color: settings.secondary_text_color,
+                                            margin: '8px 0 0',
+                                            lineHeight: 1.5,
+                                        }}
+                                    >
+                                        {accessSummary}
+                                    </p>
+                                )}
+                                {plan.requires_account && (
+                                    <p
+                                        style={{
+                                            fontSize: '0.75rem',
+                                            color: settings.primary_color,
+                                            margin: '8px 0 0',
+                                            fontWeight: 600,
+                                        }}
+                                    >
+                                        Requires account sign-in
                                     </p>
                                 )}
                             </div>
@@ -623,10 +651,8 @@ function CheckoutView({
         plan,
         displayBillingPeriod,
     );
-    const billingLabel =
-        plan.plan_type === 'one_time'
-            ? 'One-time payment'
-            : formatBillingPeriod(displayBillingPeriod);
+    const billingLabel = resolvePlanChargeLabel(plan, displayBillingPeriod);
+    const accessSummary = resolvePlanAccessSummary(plan);
 
     const inputStyle: React.CSSProperties = {
         width: '100%',
@@ -728,6 +754,18 @@ function CheckoutView({
                         {discountLabel}
                     </p>
                 )}
+                {accessSummary && (
+                    <p
+                        style={{
+                            fontSize: '0.75rem',
+                            color: settings.secondary_text_color,
+                            margin: '6px 0 0',
+                            lineHeight: 1.5,
+                        }}
+                    >
+                        {accessSummary}
+                    </p>
+                )}
             </div>
 
             <div style={{ marginBottom: '18px' }}>
@@ -793,9 +831,7 @@ function SuccessView({
     const planName = plan?.name ?? 'Premium Plan';
     const priceFormatted = plan?.price_formatted ?? '29.99';
     const billingLabel = plan
-        ? plan.plan_type === 'one_time'
-            ? 'One-time payment'
-            : formatBillingPeriod(plan.billing_period)
+        ? resolvePlanChargeLabel(plan, plan.billing_period)
         : 'per month';
 
     return (

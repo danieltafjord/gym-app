@@ -19,7 +19,9 @@ class MembershipFactory extends Factory
         return [
             'user_id' => User::factory(),
             'team_id' => Team::factory(),
-            'membership_plan_id' => MembershipPlan::factory(),
+            'membership_plan_id' => fn (array $attributes) => MembershipPlan::factory()->create([
+                'team_id' => $attributes['team_id'],
+            ])->id,
             'email' => fake()->safeEmail(),
             'customer_name' => fake()->name(),
             'customer_phone' => fake()->phoneNumber(),
@@ -27,6 +29,8 @@ class MembershipFactory extends Factory
             'status' => MembershipStatus::Active,
             'starts_at' => now(),
             'ends_at' => now()->addMonth(),
+            'activated_at' => now(),
+            'entries_used' => 0,
             'cancelled_at' => null,
         ];
     }

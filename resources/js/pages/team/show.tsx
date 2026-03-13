@@ -44,7 +44,9 @@ export default function ShowTeam({
                     </Button>
                 </div>
 
-                <div className={`grid gap-4 ${singleGym ? 'md:grid-cols-2' : 'md:grid-cols-3'}`}>
+                <div
+                    className={`grid gap-4 ${singleGym ? 'md:grid-cols-2' : 'md:grid-cols-3'}`}
+                >
                     {!singleGym && (
                         <Card>
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -207,18 +209,26 @@ export default function ShowTeam({
                                     >
                                         <div>
                                             <p className="font-medium">
-                                                {membership.user?.name ?? 'Unknown'}
+                                                {membership.user?.name ??
+                                                    'Unknown'}
                                             </p>
                                             <p className="text-sm text-muted-foreground">
-                                                {membership.plan?.name ?? 'No plan'} &middot;{' '}
-                                                {new Date(membership.starts_at).toLocaleDateString()}
+                                                {membership.plan?.name ??
+                                                    'No plan'}{' '}
+                                                &middot;{' '}
+                                                {membership.starts_at
+                                                    ? new Date(
+                                                          membership.starts_at,
+                                                      ).toLocaleDateString()
+                                                    : 'Not activated'}
                                             </p>
                                         </div>
                                         <Badge
                                             variant={
                                                 membership.status === 'active'
                                                     ? 'default'
-                                                    : membership.status === 'cancelled'
+                                                    : membership.status ===
+                                                        'cancelled'
                                                       ? 'destructive'
                                                       : 'secondary'
                                             }

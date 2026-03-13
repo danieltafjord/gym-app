@@ -40,6 +40,23 @@ class ProcessCheckIn
             ];
         }
 
+        if ($membership->plan?->activatesOnFirstCheckIn() && $membership->activated_at === null) {
+            $membership->activate(now());
+            $membership->refresh()->loadMissing(['user', 'plan']);
+        }
+
+        $membership->syncExpiredStatus();
+        $membership->refresh()->loadMissing(['user', 'plan']);
+
+        if (! $membership->canAccessGym()) {
+            return [
+                'success' => false,
+                'check_in' => null,
+                'message' => $this->resolveInvalidMembershipMessage($membership),
+                'membership' => $membership,
+            ];
+        }
+
         $settings = $team->check_in_settings_with_defaults;
         $duplicateMinutes = $settings['prevent_duplicate_minutes'] ?? 5;
 
@@ -83,7 +100,13 @@ class ProcessCheckIn
             'method' => CheckInMethod::from($data['method']),
         ]);
 
-        $membership->regenerateAccessCode();
+        $membership->increment('entries_used');
+        $membership->refresh()->loadMissing('plan');
+        $membership->syncExpiredStatus();
+
+        if ($membership->shouldRotateAccessCodeOnCheckIn()) {
+            $membership->regenerateAccessCode();
+        }
 
         return [
             'success' => true,
@@ -91,5 +114,26 @@ class ProcessCheckIn
             'message' => "Welcome, {$membership->customer_name}!",
             'membership' => $membership,
         ];
+    }
+
+    private function resolveInvalidMembershipMessage(Membership $membership): string
+    {
+        if ($membership->status !== MembershipStatus::Active) {
+            return "This membership is {$membership->status->value}.";
+        }
+
+        if ($membership->starts_at?->isFuture()) {
+            return 'This membership is not active yet.';
+        }
+
+        if ($membership->hasReachedEntryLimit()) {
+            return 'This membership has no remaining entries.';
+        }
+
+        if ($membership->hasExpiredAccessWindow()) {
+            return 'This membership is expired.';
+        }
+
+        return 'This membership is not valid for check-in.';
     }
 }

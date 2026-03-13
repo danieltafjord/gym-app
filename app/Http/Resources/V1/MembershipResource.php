@@ -14,9 +14,12 @@ class MembershipResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'status' => $this->status,
+            'status' => $this->status?->value,
             'starts_at' => $this->starts_at,
             'ends_at' => $this->ends_at,
+            'activated_at' => $this->activated_at,
+            'entries_used' => $this->entries_used,
+            'is_currently_valid' => $this->is_currently_valid,
             'cancelled_at' => $this->cancelled_at,
             'user' => new UserResource($this->whenLoaded('user')),
             'team' => new TeamResource($this->whenLoaded('team')),
