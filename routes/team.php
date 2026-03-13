@@ -33,6 +33,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 'gym' => request()->route('gym'),
             ]))->name('team.gyms.settings');
             Route::get('general', [GymController::class, 'edit'])->name('team.gyms.settings.general');
+            Route::get('occupancy', [GymController::class, 'occupancy'])->name('team.gyms.settings.occupancy');
             Route::get('widget', [WidgetSettingsController::class, 'edit'])->name('team.gyms.settings.widget');
             Route::patch('widget', [WidgetSettingsController::class, 'update'])->name('team.gyms.settings.widget.update');
             Route::delete('widget', [WidgetSettingsController::class, 'destroy'])->name('team.gyms.settings.widget.destroy');

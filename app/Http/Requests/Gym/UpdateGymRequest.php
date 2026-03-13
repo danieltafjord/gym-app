@@ -20,6 +20,10 @@ class UpdateGymRequest extends FormRequest
             'phone' => ['nullable', 'string', 'max:50'],
             'email' => ['nullable', 'string', 'email', 'max:255'],
             'is_active' => ['sometimes', 'boolean'],
+            'max_capacity' => ['nullable', 'integer', 'min:1', 'max:10000'],
+            'occupancy_tracking_enabled' => ['sometimes', 'boolean'],
+            'show_occupancy_to_members' => ['sometimes', 'boolean'],
+            'show_occupancy_predictions' => ['sometimes', 'boolean'],
         ];
     }
 }

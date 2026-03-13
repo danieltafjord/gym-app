@@ -33,6 +33,14 @@ class GymFactory extends Factory
         ]);
     }
 
+    public function withOccupancyTracking(int $maxCapacity = 100): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'occupancy_tracking_enabled' => true,
+            'max_capacity' => $maxCapacity,
+        ]);
+    }
+
     public function withWidgetSettings(): static
     {
         return $this->state(fn (array $attributes) => [

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Public\GymOccupancyController;
 use App\Http\Controllers\Webhook\StripeWebhookController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -13,6 +14,7 @@ Route::get('/', function () {
 
 Route::middleware(['auth'])->group(function () {
     Route::redirect('dashboard', '/account')->name('dashboard');
+    Route::get('gym-occupancy/{team}/{gym}', [GymOccupancyController::class, 'show'])->name('gym.occupancy');
 });
 
 // Stripe Webhooks (CSRF excluded in bootstrap/app.php)

@@ -37,6 +37,7 @@ import type { NavItem } from '@/types';
 import AppLogoIcon from './app-logo-icon';
 import { show as teamShow } from '@/routes/team';
 import { index as teamGymsIndex } from '@/routes/team/gyms';
+import { general as teamGymsSettingsGeneral } from '@/routes/team/gyms/settings';
 import { index as teamPlansIndex } from '@/routes/team/plans';
 import { index as teamMembersIndex } from '@/routes/team/members';
 import { scanner as teamCheckInScanner } from '@/routes/team/check-in';
@@ -72,12 +73,21 @@ export function AppSidebar() {
     const managedTeams = auth.managedTeams ?? [];
     const hasMultipleTeams = managedTeams.length > 1;
     const activeTeamName = currentTeam?.name ?? managedTeams[0]?.name ?? 'GymApp';
-    const gymNavigationItem = currentTeam && !currentTeam.singleGym
-        ? {
-              title: 'Gyms',
-              href: teamGymsIndex(currentTeam.slug),
-              icon: Dumbbell,
-          }
+    const gymNavigationItem = currentTeam
+        ? currentTeam.singleGym
+            ? {
+                  title: 'Gym Settings',
+                  href: teamGymsSettingsGeneral({
+                      team: currentTeam.slug,
+                      gym: currentTeam.singleGym.slug,
+                  }),
+                  icon: Dumbbell,
+              }
+            : {
+                  title: 'Gyms',
+                  href: teamGymsIndex(currentTeam.slug),
+                  icon: Dumbbell,
+              }
         : null;
 
     const teamNavItems: NavItem[] = currentTeam

@@ -58,6 +58,10 @@ export type Gym = {
     phone: string | null;
     email: string | null;
     is_active: boolean;
+    max_capacity: number | null;
+    occupancy_tracking_enabled: boolean;
+    show_occupancy_to_members: boolean;
+    show_occupancy_predictions: boolean;
     widget_settings: WidgetSettings | null;
     created_at: string;
     updated_at: string;

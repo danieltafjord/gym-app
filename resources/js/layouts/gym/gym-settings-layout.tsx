@@ -30,6 +30,13 @@ export default function GymSettingsLayout({
             }),
         },
         {
+            title: 'Occupancy',
+            href: team.gyms.settings.occupancy.url({
+                team: teamSlug,
+                gym: gymSlug,
+            }),
+        },
+        {
             title: 'Widget',
             href: team.gyms.settings.widget.url({
                 team: teamSlug,

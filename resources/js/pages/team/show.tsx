@@ -1,5 +1,6 @@
 import { Head, Link, usePage } from '@inertiajs/react';
 import { Building2, CreditCard, ExternalLink, Users } from 'lucide-react';
+import GymOccupancyTracker from '@/components/gym-occupancy-tracker';
 import Heading from '@/components/heading';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -8,12 +9,19 @@ import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem, Membership, Team } from '@/types';
 import team from '@/routes/team';
 
+interface OccupancyGym {
+    gym_name: string;
+    occupancy_url: string;
+}
+
 export default function ShowTeam({
     team: currentTeam,
     recentMemberships,
+    occupancyGyms,
 }: {
     team: Team;
     recentMemberships: Membership[];
+    occupancyGyms: OccupancyGym[];
 }) {
     const pageCurrentTeam = usePage().props.currentTeam;
     const singleGym = pageCurrentTeam?.singleGym ?? null;
@@ -91,6 +99,23 @@ export default function ShowTeam({
                         </CardContent>
                     </Card>
                 </div>
+
+                {occupancyGyms.length > 0 && (
+                    <div className="space-y-4">
+                        {occupancyGyms.map((gym) => (
+                            <div key={gym.occupancy_url}>
+                                {occupancyGyms.length > 1 && (
+                                    <p className="mb-2 text-sm font-medium">
+                                        {gym.gym_name}
+                                    </p>
+                                )}
+                                <GymOccupancyTracker
+                                    occupancyUrl={gym.occupancy_url}
+                                />
+                            </div>
+                        ))}
+                    </div>
+                )}
 
                 <div className="grid gap-4 md:grid-cols-3">
                     <Button variant="outline" asChild>

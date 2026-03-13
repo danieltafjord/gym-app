@@ -1,5 +1,6 @@
 import { Head } from '@inertiajs/react';
 import { QRCodeSVG } from 'qrcode.react';
+import GymOccupancyTracker from '@/components/gym-occupancy-tracker';
 import Heading from '@/components/heading';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -7,8 +8,15 @@ import { resolvePlanAccessSummary } from '@/lib/membership-plans';
 import AccountLayout from '@/layouts/account-layout';
 import type { Membership } from '@/types';
 
+interface OccupancyGym {
+    gym_name: string;
+    team_name: string;
+    occupancy_url: string;
+}
+
 interface Props {
     memberships: Membership[];
+    occupancyGyms: OccupancyGym[];
 }
 
 function formatDateTime(value: string | null): string | null {
@@ -19,7 +27,7 @@ function formatDateTime(value: string | null): string | null {
     return new Date(value).toLocaleString();
 }
 
-export default function AccountDashboard({ memberships }: Props) {
+export default function AccountDashboard({ memberships, occupancyGyms }: Props) {
     const activeMemberships = memberships.filter(
         (membership) => membership.is_currently_valid,
     );
@@ -35,6 +43,32 @@ export default function AccountDashboard({ memberships }: Props) {
                 title="My Account"
                 description="Manage your memberships and account settings."
             />
+
+            {occupancyGyms.length > 0 && (
+                <section className="mb-8">
+                    <h3 className="mb-4 text-lg font-semibold tracking-tight">
+                        Gym Activity
+                    </h3>
+                    <div className="space-y-4">
+                        {occupancyGyms.map((gym) => (
+                            <div key={gym.occupancy_url}>
+                                {occupancyGyms.length > 1 && (
+                                    <p className="mb-2 text-sm font-medium">
+                                        {gym.gym_name}
+                                        <span className="text-muted-foreground">
+                                            {' '}
+                                            &middot; {gym.team_name}
+                                        </span>
+                                    </p>
+                                )}
+                                <GymOccupancyTracker
+                                    occupancyUrl={gym.occupancy_url}
+                                />
+                            </div>
+                        ))}
+                    </div>
+                </section>
+            )}
 
             {activeMemberships.length > 0 && (
                 <section className="mb-8">

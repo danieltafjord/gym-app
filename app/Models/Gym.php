@@ -48,6 +48,10 @@ class Gym extends Model
         'phone',
         'email',
         'is_active',
+        'max_capacity',
+        'occupancy_tracking_enabled',
+        'show_occupancy_to_members',
+        'show_occupancy_predictions',
         'widget_settings',
     ];
 
@@ -55,6 +59,10 @@ class Gym extends Model
     {
         return [
             'is_active' => 'boolean',
+            'max_capacity' => 'integer',
+            'occupancy_tracking_enabled' => 'boolean',
+            'show_occupancy_to_members' => 'boolean',
+            'show_occupancy_predictions' => 'boolean',
             'widget_settings' => 'array',
         ];
     }

@@ -59,6 +59,14 @@ class GymController extends Controller
         ]);
     }
 
+    public function occupancy(Team $team, Gym $gym): Response
+    {
+        return Inertia::render('team/gyms/settings/occupancy', [
+            'team' => $team,
+            'gym' => $gym,
+        ]);
+    }
+
     public function update(UpdateGymRequest $request, Team $team, Gym $gym, UpdateGym $action): RedirectResponse
     {
         $action->handle($gym, $request->validated());

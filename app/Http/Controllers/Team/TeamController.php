@@ -28,6 +28,19 @@ class TeamController extends Controller
 
     public function show(Team $team): Response
     {
+        $occupancyGyms = $team->gyms()
+            ->where('occupancy_tracking_enabled', true)
+            ->whereNotNull('max_capacity')
+            ->active()
+            ->get()
+            ->map(fn ($gym) => [
+                'gym_name' => $gym->name,
+                'occupancy_url' => route('gym.occupancy', [
+                    'team' => $team->slug,
+                    'gym' => $gym->slug,
+                ]),
+            ]);
+
         return Inertia::render('team/show', [
             'team' => $team->loadCount(['gyms', 'memberships'])
                 ->load('membershipPlans'),
@@ -36,6 +49,7 @@ class TeamController extends Controller
                 ->latest()
                 ->limit(5)
                 ->get(),
+            'occupancyGyms' => $occupancyGyms,
         ]);
     }
 
