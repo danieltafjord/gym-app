@@ -182,6 +182,49 @@ export type CheckInResult = {
     } | null;
 };
 
+export type TeamInvitation = {
+    id: number;
+    team_id: number;
+    email: string;
+    role: string;
+    token: string;
+    invited_by: number;
+    expires_at: string;
+    accepted_at: string | null;
+    inviter?: {
+        id: number;
+        name: string;
+    };
+    created_at: string;
+    updated_at: string;
+};
+
+export type StaffMember = {
+    id: number;
+    name: string;
+    email: string;
+    role: string;
+};
+
+export type DashboardStats = {
+    active_members: number;
+    mrr: number;
+    check_ins_today: number;
+};
+
+export type AnalyticsStats = {
+    active_members: number;
+    mrr: number;
+    check_ins_today: number;
+    new_members_this_month: number;
+    churn_rate: number;
+};
+
+export type ChartDataPoint = {
+    label: string;
+    value: number;
+};
+
 export type PaginatedData<T> = {
     data: T[];
     current_page: number;

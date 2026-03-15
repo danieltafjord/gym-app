@@ -3,8 +3,10 @@
 namespace App\Actions\Membership;
 
 use App\Enums\MembershipStatus;
+use App\Mail\MembershipCancelledMail;
 use App\Models\Membership;
 use App\Services\StripeService;
+use Illuminate\Support\Facades\Mail;
 
 class CancelMembership
 {
@@ -22,6 +24,10 @@ class CancelMembership
             'stripe_status' => $membership->stripe_subscription_id ? 'canceled' : null,
         ]);
 
-        return $membership->fresh();
+        $membership = $membership->fresh()->load('team', 'plan');
+
+        Mail::to($membership->email)->queue(new MembershipCancelledMail($membership));
+
+        return $membership;
     }
 }

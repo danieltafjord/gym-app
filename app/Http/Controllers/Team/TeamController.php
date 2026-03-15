@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Team;
 
 use App\Actions\Team\CreateTeam;
+use App\Actions\Team\GetTeamDashboardStats;
 use App\Actions\Team\UpdateTeam;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Team\StoreTeamRequest;
@@ -26,7 +27,7 @@ class TeamController extends Controller
         return to_route('team.show', $team);
     }
 
-    public function show(Team $team): Response
+    public function show(Team $team, GetTeamDashboardStats $statsAction): Response
     {
         $occupancyGyms = $team->gyms()
             ->where('occupancy_tracking_enabled', true)
@@ -44,12 +45,8 @@ class TeamController extends Controller
         return Inertia::render('team/show', [
             'team' => $team->loadCount(['gyms', 'memberships'])
                 ->load('membershipPlans'),
-            'recentMemberships' => $team->memberships()
-                ->with(['user', 'plan'])
-                ->latest()
-                ->limit(5)
-                ->get(),
             'occupancyGyms' => $occupancyGyms,
+            'stats' => $statsAction->dashboardStats($team),
         ]);
     }
 

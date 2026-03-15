@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Public\AcceptInvitationController;
 use App\Http\Controllers\Public\GymOccupancyController;
 use App\Http\Controllers\Webhook\StripeWebhookController;
 use Illuminate\Support\Facades\Route;
@@ -12,9 +13,12 @@ Route::get('/', function () {
     ]);
 })->name('home');
 
+Route::get('invitation/{token}', [AcceptInvitationController::class, 'show'])->name('invitation.show');
+
 Route::middleware(['auth'])->group(function () {
     Route::redirect('dashboard', '/account')->name('dashboard');
     Route::get('gym-occupancy/{team}/{gym}', [GymOccupancyController::class, 'show'])->name('gym.occupancy');
+    Route::post('invitation/{token}/accept', [AcceptInvitationController::class, 'accept'])->name('invitation.accept');
 });
 
 // Stripe Webhooks (CSRF excluded in bootstrap/app.php)

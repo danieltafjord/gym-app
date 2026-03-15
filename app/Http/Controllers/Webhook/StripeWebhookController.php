@@ -4,12 +4,14 @@ namespace App\Http\Controllers\Webhook;
 
 use App\Enums\MembershipStatus;
 use App\Http\Controllers\Controller;
+use App\Mail\PaymentFailedMail;
 use App\Models\Membership;
 use App\Models\Team;
 use App\Services\StripeService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class StripeWebhookController extends Controller
 {
@@ -94,6 +96,10 @@ class StripeWebhookController extends Controller
             $membership->update([
                 'stripe_status' => 'past_due',
             ]);
+
+            $membership->load('team', 'plan');
+
+            Mail::to($membership->email)->queue(new PaymentFailedMail($membership));
         }
 
         return response()->json(['message' => 'Handled']);

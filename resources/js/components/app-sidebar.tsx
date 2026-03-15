@@ -1,5 +1,6 @@
 import { Link, usePage } from '@inertiajs/react';
 import {
+    BarChart3,
     Building2,
     Check,
     ChevronsUpDown,
@@ -35,7 +36,7 @@ import {
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import type { NavItem } from '@/types';
 import AppLogoIcon from './app-logo-icon';
-import { show as teamShow } from '@/routes/team';
+import { show as teamShow, analytics as teamAnalytics } from '@/routes/team';
 import { index as teamGymsIndex } from '@/routes/team/gyms';
 import { general as teamGymsSettingsGeneral } from '@/routes/team/gyms/settings';
 import { index as teamPlansIndex } from '@/routes/team/plans';
@@ -117,6 +118,11 @@ export function AppSidebar() {
                   title: 'Members',
                   href: teamMembersIndex(currentTeam.slug),
                   icon: Users,
+              },
+              {
+                  title: 'Analytics',
+                  href: teamAnalytics(currentTeam.slug).url,
+                  icon: BarChart3,
               },
               {
                   title: 'Settings',

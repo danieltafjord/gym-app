@@ -122,6 +122,11 @@ class Team extends Model
         return $this->hasMany(CheckIn::class);
     }
 
+    public function invitations(): HasMany
+    {
+        return $this->hasMany(TeamInvitation::class);
+    }
+
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true);

@@ -26,6 +26,10 @@ export default function TeamSettingsLayout({
             title: 'Check-In',
             href: team.settings.checkIn.url(teamSlug),
         },
+        {
+            title: 'Staff',
+            href: team.settings.staff.url(teamSlug),
+        },
     ];
 
     if (typeof window === 'undefined') {

@@ -35,6 +35,7 @@ class Membership extends Model
         'activated_at',
         'entries_used',
         'cancelled_at',
+        'expiry_reminder_sent_at',
         'stripe_subscription_id',
         'stripe_payment_intent_id',
         'stripe_status',
@@ -49,6 +50,7 @@ class Membership extends Model
             'activated_at' => 'datetime',
             'entries_used' => 'integer',
             'cancelled_at' => 'datetime',
+            'expiry_reminder_sent_at' => 'datetime',
         ];
     }
 
@@ -108,6 +110,23 @@ class Membership extends Model
     public function scopeForTeam(Builder $query, int $teamId): Builder
     {
         return $query->where('team_id', $teamId);
+    }
+
+    public function scopeExpired(Builder $query): Builder
+    {
+        return $query->where(function (Builder $q) {
+            $q->where(function (Builder $q2) {
+                $q2->whereNotNull('ends_at')->where('ends_at', '<=', now());
+            });
+        })->where('status', MembershipStatus::Active);
+    }
+
+    public function scopeExpiringWithin(Builder $query, int $days): Builder
+    {
+        return $query->where('status', MembershipStatus::Active)
+            ->whereNotNull('ends_at')
+            ->where('ends_at', '>', now())
+            ->where('ends_at', '<=', now()->addDays($days));
     }
 
     public function activate(DateTimeInterface $activatedAt): void

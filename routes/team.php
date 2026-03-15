@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Team\AnalyticsController;
 use App\Http\Controllers\Team\CheckInController;
 use App\Http\Controllers\Team\CheckInSettingsController;
 use App\Http\Controllers\Team\GymController;
@@ -7,6 +8,7 @@ use App\Http\Controllers\Team\MemberController;
 use App\Http\Controllers\Team\MemberExportController;
 use App\Http\Controllers\Team\MembershipNoteController;
 use App\Http\Controllers\Team\MembershipPlanController;
+use App\Http\Controllers\Team\StaffController;
 use App\Http\Controllers\Team\StripeConnectController;
 use App\Http\Controllers\Team\TeamController;
 use App\Http\Controllers\Team\TeamGeneralSettingsController;
@@ -20,6 +22,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::middleware(['team.access', 'team.active'])->prefix('team/{team}')->group(function () {
         Route::get('/', [TeamController::class, 'show'])->name('team.show');
+        Route::get('analytics', [AnalyticsController::class, 'show'])->name('team.analytics');
         Route::get('edit', [TeamController::class, 'edit'])->name('team.edit');
         Route::patch('/', [TeamController::class, 'update'])->name('team.update');
 
@@ -77,6 +80,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::patch('settings/widget-defaults', [TeamWidgetDefaultsController::class, 'update'])->name('team.settings.widget-defaults.update');
         Route::get('settings/check-in', [CheckInSettingsController::class, 'edit'])->name('team.settings.check-in');
         Route::patch('settings/check-in', [CheckInSettingsController::class, 'update'])->name('team.settings.check-in.update');
+        Route::get('settings/staff', [StaffController::class, 'index'])->name('team.settings.staff');
+        Route::post('settings/staff/invite', [StaffController::class, 'store'])->name('team.settings.staff.invite');
+        Route::delete('settings/staff/invitations/{invitation}', [StaffController::class, 'destroyInvitation'])->name('team.settings.staff.invitations.destroy');
+        Route::delete('settings/staff/{user}', [StaffController::class, 'removeStaff'])->name('team.settings.staff.remove');
 
         // Stripe Connect
         Route::get('stripe/onboard', [StripeConnectController::class, 'onboard'])->name('team.stripe.onboard');

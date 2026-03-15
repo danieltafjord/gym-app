@@ -33,6 +33,8 @@ class RolesAndPermissionsSeeder extends Seeder
             'membership.view-own',
             'membership.create-own',
             'membership.cancel-own',
+            'team-member.invite',
+            'team-member.remove',
             'platform.manage-teams',
             'platform.manage-users',
         ];
@@ -59,6 +61,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'gym.view', 'gym.create', 'gym.update', 'gym.delete',
             'membership-plan.view', 'membership-plan.create', 'membership-plan.update', 'membership-plan.delete',
             'member.view', 'member.create', 'member.update', 'member.delete',
+            'team-member.invite', 'team-member.remove',
         ]);
 
         $teamAdmin->syncPermissions([
@@ -66,6 +69,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'gym.view', 'gym.create', 'gym.update',
             'membership-plan.view',
             'member.view', 'member.create', 'member.update',
+            'team-member.invite', 'team-member.remove',
         ]);
 
         $member->syncPermissions([
